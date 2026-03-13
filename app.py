@@ -1,20 +1,22 @@
 import streamlit as st
 import requests
 import json
+from gtts import gTTS
+import io
 
 # ✅ App Setup
 st.set_page_config(page_title="SR-AI Mastermind", page_icon="🏴")
-st.title("🔥 SR-AI MASTERMIND v13.0")
-st.subheader("Babu, SR Comedy Gang ka digital HQ! 🚀")
+st.title("🔥 SR-AI MASTERMIND v14.0 (Voice Engine 🗣️)")
+st.subheader("Babu, SR Comedy Gang ka bolne wala digital HQ! 🚀")
 
-# 🔒 HIGH SECURITY TIER
+# 🔒 HIGH SECURITY TIER (Chabi tijori mein ekdum safe hai)
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
     st.error("Babu, Streamlit ki tijori mein key nahi mili! Settings > Secrets check kijiye.")
     st.stop()
 
-# ⚡ ENGINE CHANGED: 'gemini-flash-latest' (List ka sabse stable aur free engine)
+# ⚡ ENGINE: 'gemini-flash-latest'
 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={API_KEY}"
 headers = {'Content-Type': 'application/json'}
 
@@ -25,7 +27,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Babu, kya souch rahe ho?"):
+if prompt := st.chat_input("Babu, naya dhamaka sochiye..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -57,6 +59,16 @@ if prompt := st.chat_input("Babu, kya souch rahe ho?"):
                 ai_reply = result['candidates'][0]['content']['parts'][0]['text']
                 st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                
+                # 🗣️ AWAAZ KA JADOO (Text-to-Speech)
+                try:
+                    tts = gTTS(text=ai_reply, lang='hi')
+                    audio_bytes = io.BytesIO()
+                    tts.write_to_fp(audio_bytes)
+                    st.audio(audio_bytes, format='audio/mp3')
+                except Exception as e:
+                    st.warning("Babu, bolne mein thodi kharabi aayi, par text aa gaya!")
+                    
             else:
                 st.error(f"❌ Error Babu, lagta hai Google ne break liya hai: {result}")
                 
