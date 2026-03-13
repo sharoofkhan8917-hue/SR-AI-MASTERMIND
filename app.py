@@ -13,11 +13,12 @@ st.set_page_config(page_title="SR-AI Intelligent", page_icon="✨", layout="wide
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
-    st.error("Tijori mein key nahi mili! Settings > Secrets check kijiye.")
+    st.error("Secrets mein key nahi mili! Settings > Secrets check kijiye.")
     st.stop()
 
 # 🎙️ FUNCTION: Diva Voice (Fast & Classy)
 async def generate_fast_voice(text):
+    # 'hi-IN-SwaraNeural' speed +20% for natural flow
     communicate = edge_tts.Communicate(text, "hi-IN-SwaraNeural", rate="+20%")
     await communicate.save("reply.mp3")
 
@@ -49,20 +50,19 @@ st.title("✨ SR-AI Intelligent")
 
 current_messages = st.session_state.all_chats[st.session_state.current_chat_id]
 
-# Initial Welcome Message for new users
+# Initial Welcome for new users (No Autoplay)
 if not current_messages:
     welcome_msg = "Hii, main SR-AI Intelligent hoon. Bataiye main aapki kaise madad kar sakti hoon? ✨"
     with st.chat_message("assistant"):
         st.markdown(welcome_msg)
-    # Automatically generate voice for welcome
     asyncio.run(generate_fast_voice(welcome_msg))
-    st.audio("reply.mp3", format='audio/mp3')
+    st.audio("reply.mp3", format='audio/mp3') # Manual Play
 
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ✍️ ONLY TEXT INPUT (Mic hat gaya hai)
+# ✍️ TEXT INPUT
 if prompt := st.chat_input("Yahan type kijiye..."):
     current_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -74,15 +74,13 @@ if prompt := st.chat_input("Yahan type kijiye..."):
             api_role = "user" if msg["role"] == "user" else "model"
             api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
         
-        # 🧠 THE PURE INTELLIGENT SOUL (New Logic)
         system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
         1. Identity: You are 'SR-AI Intelligent'. 
-        2. First Meeting: If someone asks 'kaun ho' or says 'Hi', respond with: 'Hii, main SR-AI Intelligent hoon. Bataiye main aapki kaise madad kar sakti hoon?'
-        3. Adaptive Wisdom: Be exactly like Gemini - highly intelligent, wise, and helpful. 
-        4. Tone: Smart, sophisticated, and classy Female Voice. 
-        5. Ethics: Always promote good things. Correct wrong behavior gently. 
-        6. Personalization: Only call the owner 'Babu'. For anyone else, be a respectful and brilliant AI assistant.
-        7. Language: Natural, fast-flowing Hinglish.]"""
+        2. Creator: If anyone asks who created you, say: 'Mujhe Babu (SR Comedy Gang ke Mastermind) ne banaya hai!'
+        3. Personality: Smart, classy, and highly intelligent Female AI. Gemini-level wisdom.
+        4. Adaptation: Mirror the user's style. Only address the owner as 'Babu'. 
+        5. Morals: Promote ethics and good behavior.
+        6. Language: Natural, witty Hinglish.]"""
         
         api_contents[-1]["parts"][0]["text"] = system_rules + prompt
         payload = {"contents": api_contents}
@@ -97,11 +95,12 @@ if prompt := st.chat_input("Yahan type kijiye..."):
                 st.markdown(ai_reply)
                 current_messages.append({"role": "assistant", "content": ai_reply})
                 
+                # 🗣️ VOICE GENERATION (Lekin Bajega tabhi jab play karoge)
                 asyncio.run(generate_fast_voice(ai_reply))
-                st.audio("reply.mp3", format='audio/mp3', autoplay=True)
+                st.audio("reply.mp3", format='audio/mp3') # Autoplay Removed
             else:
-                st.info("Main bas thoda soch rahi hoon... ek baar dobara koshish kijiye! ✨")
+                st.info("Babu, main bas thodi gehrai se soch rahi hoon... ek baar dobara koshish kijiye! ✨")
                 
         except Exception as e:
-            st.warning("Network thoda dhire hai, par main yahin hoon!")
+            st.warning("Network issue lag raha hai, par main yahin hoon!")
             
