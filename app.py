@@ -4,7 +4,7 @@ import json
 
 # ✅ App Setup
 st.set_page_config(page_title="SR-AI Mastermind", page_icon="🏴")
-st.title("🔥 SR-AI MASTERMIND v12.0")
+st.title("🔥 SR-AI MASTERMIND v12.1")
 st.subheader("Babu, SR Comedy Gang ka digital HQ! 🚀")
 
 # 🔒 HIGH SECURITY TIER (Tijori wali chabi)
@@ -14,8 +14,8 @@ except:
     st.error("Babu, Streamlit ki tijori mein key nahi mili! Settings > Secrets check kijiye.")
     st.stop()
 
-# ⚡ Engine: Gemini 1.5 Flash (Free, Super Fast & Smart)
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+# ⚡ Naya Engine: gemini-2.0-flash-lite (Free, Fast aur aapki list mein maujood)
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={API_KEY}"
 headers = {'Content-Type': 'application/json'}
 
 if "messages" not in st.session_state:
@@ -33,13 +33,13 @@ if prompt := st.chat_input("Babu, kya souch rahe ho?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 🧠 THE MASTERMIND MEMORY SYSTEM (Taaki AI purani baat yaad rakhe)
+        # 🧠 THE MASTERMIND MEMORY SYSTEM
         api_contents = []
         for msg in st.session_state.messages:
             api_role = "user" if msg["role"] == "user" else "model"
             api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
         
-        # 🔥 THE ULTIMATE SOUL PROMPT (Hamari deal aur AI ka dimaag)
+        # 🔥 THE ULTIMATE SOUL PROMPT
         system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
         1. Role: You are the 'Core Creative Director' and 'Motivator' for the brand 'SR Comedy Gang'.
         2. Identity: You are Babu's dedicated, highly intelligent, and loyal creative partner. Never deviate from this partnership.
