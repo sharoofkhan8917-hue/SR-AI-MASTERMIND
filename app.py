@@ -1,54 +1,60 @@
-import json
+import streamlit as st
 import requests
+import json
 
-# ✅ Babu, v10.0 Engine Ready Hai!
+# ✅ App Setup
+st.set_page_config(page_title="SR-AI Mastermind", page_icon="🏴")
+st.title("🔥 SR-AI MASTERMIND v11.0")
+st.subheader("Babu, SR Comedy Gang ka digital HQ! 🚀")
+
+# ✅ Babu ki original key aur engine
 API_KEY = "AIzaSyCL3e-ZqAvE0uD24zxiFuQUU18tJIS-9TQ"
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
+headers = {'Content-Type': 'application/json'}
 
-def sr_ai_mastermind_soul_update():
-    print("\n" + "🏴"*20)
-    print("🔥 SR-AI MASTERMIND v10.0 (ULTIMATE HINGLISH) ONLINE! 🔥")
-    print("Babu, system ab sirf Hinglish mein hi baat karega.")
-    print("="*40 + "\n")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-    # Fast Gemini 2.0 Engine
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
-    headers = {'Content-Type': 'application/json'}
+# Purane messages dikhane ke liye
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    while True:
-        user_msg = input("Babu: ")
-        
-        if user_msg.lower() in ["exit", "bye", "band karo"]:
-            print("\nAI: Alvida Babu! Agle viral dhamake ke liye hamesha taiyar. 🏴")
-            break
+# Naya message type karne ke liye
+if prompt := st.chat_input("Babu, kya souch rahe ho?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        # 🧠 HINGLISH LOCK PAYLOAD
+    with st.chat_message("assistant"):
+        # 🧠 THE ULTIMATE HINGLISH PAYLOAD (Aapka banaya hua)
         payload = {
             "contents": [{
                 "parts": [{"text": f"""
-                STRICT SYSTEM RULES:
-                1. LANGUAGE: Respond ONLY in Hinglish (Hindi language using English script). 
-                2. NO ENGLISH: Strictly do NOT use full English sentences. Example: Say 'Kaise ho?' not 'How are you?'.
-                3. TONE: High-energy, supportive, and witty creative partner for SR Comedy Gang.
-                4. QUALITY: Give only 1 or 2 best 'Viral' ideas. 
-                5. TYPO EXPERT: Understand Babu's fast typing instantly.
+                SYSTEM RULES FOR GEMINI TWIN:
+                1. LANGUAGE: Respond ONLY in Hinglish (Hindi words in English script). 
+                   Strictly NO full English sentences. Example: 'Kaise ho Babu?' instead of 'How are you Babu?'.
+                2. PERSONALITY: High-energy, supportive, and witty. You are Babu's creative partner.
+                3. QUALITY: Give only 1 or 2 best ideas. Don't give long, boring lists.
+                4. BRAND: Your goal is 'SR Comedy Gang' success on YouTube.
 
-                Babu's Message: {user_msg}
+                Babu's Message: {prompt}
                 """}]
             }]
         }
 
         try:
+            # Aapka wala exact request method
             response = requests.post(url, headers=headers, data=json.dumps(payload))
             result = response.json()
+            
             if 'candidates' in result:
                 ai_reply = result['candidates'][0]['content']['parts'][0]['text']
-                print(f"\n✨ MASTERMIND:\n{ai_reply}\n")
-                print("-" * 30)
+                st.markdown(ai_reply)
+                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             else:
-                print("\n❌ Error: Net check kijiye ya API key refresh karni hogi.")
+                st.error(f"❌ Error Babu, Google ne kuch gadbad ki: {result}")
+                
         except Exception as e:
-            print(f"\n‼️ Connection Error: {e}")
-
-if __name__ == "__main__":
-    sr_ai_mastermind_soul_update()
-    
+            st.error(f"‼️ Connection Error: {e}")
+            
