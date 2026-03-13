@@ -7,8 +7,13 @@ st.set_page_config(page_title="SR-AI Mastermind", page_icon="🏴")
 st.title("🔥 SR-AI MASTERMIND v11.0")
 st.subheader("Babu, SR Comedy Gang ka digital HQ! 🚀")
 
-# ✅ Babu ki original key aur engine
-API_KEY = "AIzaSyCL3e-ZqAvE0uD24zxiFuQUU18tJIS-9TQ"
+# 🔒 HIGH SECURITY TIER: Key ab GitHub par nahi, Streamlit ki tijori mein hai!
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except:
+    st.error("Babu, Streamlit ki tijori mein key nahi mili! Settings > Secrets check kijiye.")
+    st.stop()
+
 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 headers = {'Content-Type': 'application/json'}
 
@@ -27,7 +32,7 @@ if prompt := st.chat_input("Babu, kya souch rahe ho?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 🧠 THE ULTIMATE HINGLISH PAYLOAD (Aapka banaya hua)
+        # 🧠 THE ULTIMATE HINGLISH PAYLOAD (Aapka Masterpiece)
         payload = {
             "contents": [{
                 "parts": [{"text": f"""
