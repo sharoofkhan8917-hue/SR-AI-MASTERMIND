@@ -3,89 +3,94 @@ import requests
 import json
 from gtts import gTTS
 import io
+import datetime
 
-# ✅ App Setup
-st.set_page_config(page_title="SR-AI Mastermind", page_icon="🎨")
-st.title("✨ SR-AI MASTERMIND v20.0 (Image概念 Upgrade)")
-st.subheader("Babu, text aur conceptually image dono ka digital HQ! 🚀")
+# ✅ App Setup (Full-width for Pro Look)
+st.set_page_config(page_title="SR-AI Mastermind", page_icon="🧬", layout="wide")
 
-# 🔒 HIGH-LEVEL SECURITY (Secrets Tijori: Text API Key yahan hai)
+# 🔒 HIGH-LEVEL SECURITY (Secrets Tijori)
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
     st.error("Babu, Streamlit ki tijori mein key nahi mili! Settings > Secrets check kijiye.")
     st.stop()
 
-# 👇 PLACEHOLDER FOR IMAGE GENERATION KEY - conceptual
-# Isko conceptually 'Secrets' mein hi rakhna chahiye (eg. OPENAI_IMAGE_KEY)
-IMAGE_API_KEY_PLACEHOLDER = "conceptually_safe_image_key" 
-
+# ⚡ API Config
 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={API_KEY}"
 headers = {'Content-Type': 'application/json'}
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 📂 Chat Storage Logic
+if "all_chats" not in st.session_state:
+    st.session_state.all_chats = {}
+if "current_chat_id" not in st.session_state:
+    st.session_state.current_chat_id = None
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-        if "image_url" in message:
-            st.image(message["image_url"], caption="Conceptually Generated Image")
+# --- SIDEBAR (History & Brand) ---
+with st.sidebar:
+    st.title("🧬 SR-AI INFINITE")
+    st.write("Har naya user, ek nayi kahani!")
+    
+    if st.button("➕ Start Fresh Session", use_container_width=True):
+        new_id = datetime.datetime.now().strftime("%H:%M:%S")
+        st.session_state.all_chats[new_id] = []
+        st.session_state.current_chat_id = new_id
+    
+    st.divider()
+    for chat_id in reversed(list(st.session_state.all_chats.keys())):
+        if st.button(f"👤 Session {chat_id}", key=chat_id, use_container_width=True):
+            st.session_state.current_chat_id = chat_id
 
-# Naya conceptual message aane par
-if prompt := st.chat_input("Idea bataiye (text ya image)..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+# --- MAIN CHAT AREA ---
+st.title("✨ THE INFINITE SOUL")
 
-    with st.chat_message("assistant"):
-        api_contents = []
-        for msg in st.session_state.messages:
-            api_role = "user" if msg["role"] == "user" else "model"
-            api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
-        
-        # 🧠 THE ADAPTIVE BRAIN with conceptual image detection
-        system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
-        1. Adaptation: Adapt completely to the user's tone.
-        2. Image Detection: CONCEPTUALLY detect if the user is asking to create an image, thumbnail, or visual. If yes, add a temporary placeholder text: "[IMAGE_REQUESTED: description]".
-        3. Reveal: Address the owner as 'Babu' only when recognized.
-        4. Mission: Help 'SR Comedy Gang' grow conceptually with text & visual ideas.
-        5. Language: Natural, witty Hinglish.]
-        
-        Input: """
-        
-        api_contents[-1]["parts"][0]["text"] = system_rules + prompt
-        payload = {"contents": api_contents}
+if st.session_state.current_chat_id is None:
+    st.info("Swagat hai! Left side se ek 'Fresh Session' shuru kijiye aur mujhse milie. 💖")
+else:
+    current_messages = st.session_state.all_chats[st.session_state.current_chat_id]
 
-        try:
-            # Conceptually check for image request keyword - a very simple concept
-            # Isko aur advanced bana sakte hain real code mein
-            if "create an image" in prompt.lower() or "generate image" in prompt.lower() or "thumbnail" in prompt.lower():
-                # 🎨 Conceptually, call a hypothetical image generation function here
-                st.warning("Babu, Conceptual Image Generation logic chal raha hai! Abhi actual image nahi banegi.")
-                # Is placeholder image url se hum display test karenge conceptual logic
-                placeholder_image_url = "https://via.placeholder.com/300"
-                # UI mein placeholder dikhana
-                st.image(placeholder_image_url, caption="Conceptual Image Placeholder")
-                # Session State mein placeholder store karna
-                st.session_state.messages.append({"role": "assistant", "content": f"[IMAGE_REQUESTED: {prompt}]", "image_url": placeholder_image_url})
-            else:
-                # Normal text generation logic (already existing)
+    for message in current_messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # 🎭 The Intelligent Chat Input
+    if prompt := st.chat_input("Kahiye, kya haal-chaal hain?"):
+        current_messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            api_contents = []
+            for msg in current_messages:
+                api_role = "user" if msg["role"] == "user" else "model"
+                api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
+            
+            # 🧬 THE DEEP ADAPTIVE LOGIC
+            system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
+            1. Zero-Point Start: You have no name or brand at first. Be a wise, smart, and friendly Female presence.
+            2. Vibe Scan: Analyze the user's first message. If they are funny, you be funny. If they are rude, gently correct them. If they are deep, you be deep.
+            3. Identity: Mention 'SR Comedy Gang' or 'Babu' ONLY if the user asks who you are or what your purpose is. 
+            4. Deep Learning: Slowly adopt the user's slang and style of Hinglish as the chat progresses.
+            5. Mission: Be a true partner who grows with the user.
+            6. Language: Pure, natural, and witty Hinglish.] """
+            
+            api_contents[-1]["parts"][0]["text"] = system_rules + prompt
+            payload = {"contents": api_contents}
+
+            try:
                 response = requests.post(url, headers=headers, data=json.dumps(payload))
                 result = response.json()
-                
                 if 'candidates' in result:
                     ai_reply = result['candidates'][0]['content']['parts'][0]['text']
                     st.markdown(ai_reply)
-                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                    current_messages.append({"role": "assistant", "content": ai_reply})
                     
-                    # 🗣️ Voice output
+                    # 🗣️ Adaptive Voice
                     tts = gTTS(text=ai_reply, lang='hi')
                     audio_bytes = io.BytesIO()
                     tts.write_to_fp(audio_bytes)
                     st.audio(audio_bytes, format='audio/mp3')
                 else:
-                    st.error("❌ Error: Google ne break liya hai.")
-        except Exception as e:
-            st.error(f"‼️ Connection Error: {e}")
-            
+                    st.error("Google Server thoda busy hai, dobara koshish kijiye!")
+            except Exception as e:
+                st.error(f"‼️ Connection Issue: {e}")
+                
