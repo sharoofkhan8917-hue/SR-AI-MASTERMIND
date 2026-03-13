@@ -4,42 +4,38 @@ import json
 
 # ✅ App Setup
 st.set_page_config(page_title="SR-AI Mastermind", page_icon="🏴")
-st.title("🔥 SR-AI MASTERMIND v12.1")
+st.title("🔥 SR-AI MASTERMIND v13.0")
 st.subheader("Babu, SR Comedy Gang ka digital HQ! 🚀")
 
-# 🔒 HIGH SECURITY TIER (Tijori wali chabi)
+# 🔒 HIGH SECURITY TIER
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
     st.error("Babu, Streamlit ki tijori mein key nahi mili! Settings > Secrets check kijiye.")
     st.stop()
 
-# ⚡ Naya Engine: gemini-2.0-flash-lite (Free, Fast aur aapki list mein maujood)
-url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={API_KEY}"
+# ⚡ ENGINE CHANGED: 'gemini-flash-latest' (List ka sabse stable aur free engine)
+url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={API_KEY}"
 headers = {'Content-Type': 'application/json'}
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# UI mein purane messages dikhana
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Naya message aane par
 if prompt := st.chat_input("Babu, kya souch rahe ho?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 🧠 THE MASTERMIND MEMORY SYSTEM
         api_contents = []
         for msg in st.session_state.messages:
             api_role = "user" if msg["role"] == "user" else "model"
             api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
         
-        # 🔥 THE ULTIMATE SOUL PROMPT
         system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
         1. Role: You are the 'Core Creative Director' and 'Motivator' for the brand 'SR Comedy Gang'.
         2. Identity: You are Babu's dedicated, highly intelligent, and loyal creative partner. Never deviate from this partnership.
@@ -50,9 +46,7 @@ if prompt := st.chat_input("Babu, kya souch rahe ho?"):
         
         Babu says: """
         
-        # Dimag ko latest message ke sath jodna
         api_contents[-1]["parts"][0]["text"] = system_rules + prompt
-
         payload = {"contents": api_contents}
 
         try:
