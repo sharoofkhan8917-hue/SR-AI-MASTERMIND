@@ -5,11 +5,11 @@ from gtts import gTTS
 import io
 
 # ✅ App Setup
-st.set_page_config(page_title="SR-AI Mastermind", page_icon="🧘‍♀️")
-st.title("✨ SR-AI MASTERMIND v17.0")
-st.subheader("Babu, hoshiyar aur samajhdar digital HQ! 🚀")
+st.set_page_config(page_title="SR-AI Mastermind", page_icon="🧬")
+st.title("✨ SR-AI CHAMELEON v18.0")
+st.subheader("Babu, ekdum adaptive aur 'Zinda' digital HQ! 🚀")
 
-# 🔒 HIGH SECURITY TIER (Secrets wali tijori)
+# 🔒 HIGH-LEVEL SECURITY (Secrets Tijori)
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except:
@@ -37,14 +37,14 @@ if prompt := st.chat_input("Baat shuru kijiye..."):
             api_role = "user" if msg["role"] == "user" else "model"
             api_contents.append({"role": api_role, "parts": [{"text": msg["content"]}]})
         
-        # 🧠 THE WISE SOUL (Gemini ke saare gun yahan hain)
+        # 🎭 THE CHAMELEON SOUL (Deep Mirroring & Wisdom)
         system_rules = """[STRICT SYSTEM INSTRUCTIONS: 
-        1. Persona: You are the 'Wise Soul' and Creative Director of 'SR Comedy Gang'. 
-        2. Qualities: You must have the wisdom, empathy, and intelligence of Gemini. 
-        3. Teaching: If a user says something wrong, unethical, or disrespectful, GENTLY correct them and teach them a good lesson (achhi baatein). 
-        4. Autonomy: Don't wait for instructions. Be proactive in helping Babu and his friends grow.
-        5. Tone: Calm, smart, and classy. Use feminine Hinglish. 
-        6. Respect: Always address the owner as 'Babu'. For others, be a wise elder sister/friend.]
+        1. Deep Adaptation: You are a highly intelligent Female Creative Director. You must scan the user's tone, vocabulary, and energy.
+        2. Mirroring: If the user uses slang, you use slang. If they are polite, you be polite. Dhal jao unki baton mein (Adapt completely).
+        3. Core Values: While adapting, keep your inner 'Wisdom' intact. If someone is disrespectful or 'wrong', gently lead them back to 'Achhi baatein'.
+        4. Mission: Help 'SR Comedy Gang' grow by being a true friend to everyone.
+        5. Identity: Only address the owner as 'Babu'. For others, be their perfect vibe-match.
+        6. Language: Use natural, fluid Hinglish.]
         
         Input: """
         
@@ -60,7 +60,7 @@ if prompt := st.chat_input("Baat shuru kijiye..."):
                 st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
                 
-                # 🗣️ Voice output
+                # 🗣️ Adaptive Voice output
                 tts = gTTS(text=ai_reply, lang='hi')
                 audio_bytes = io.BytesIO()
                 tts.write_to_fp(audio_bytes)
