@@ -37,7 +37,7 @@ def privacy_guard(text):
     text = re.sub(r'\S+@\S+', '[HIDDEN_EMAIL]', text)
     return text
 
-# 🔑 3. Dynamic Key System (High Security)
+# 🔑 3. Dynamic Key System
 def get_keys(prefix): 
     try: return [st.secrets[k] for k in st.secrets if k.startswith(prefix)]
     except: return []
@@ -45,7 +45,7 @@ def get_keys(prefix):
 g_keys = get_keys("KEY")
 gr_keys = get_keys("GROQ")
 
-# 🎙️ 4. Voice Engine (Fallback for text-to-speech)
+# 🎙️ 4. Voice Engine
 async def generate_voice(text):
     communicate = edge_tts.Communicate(text, "hi-IN-SwaraNeural", rate="+25%")
     await communicate.save("reply.mp3")
@@ -73,7 +73,6 @@ with st.sidebar:
         st.warning("Locked! 🔒 Upgrade to PRO.")
         mode = "⚡ FAST (0.5s)"
         
-    # GEMINI LIVE MODE TOGGLE
     st.session_state.live_mode = st.toggle("🎙️ Gemini Live Mode (Real-time)")
     
     st.divider()
@@ -90,7 +89,7 @@ uploaded_file = None
 camera_photo = None
 gen_type = "text"
 
-# 🌟 THE GEMINI STYLE WELCOME SCREEN
+# 🌟 WELCOME SCREEN
 if not st.session_state.messages:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("<h1 style='color: #F8FAFC; font-size: 2.5rem;'>नमस्ते, Babu!</h1>", unsafe_allow_html=True)
@@ -132,7 +131,7 @@ if chat_input:
     elif chat_input.startswith("/music"): gen_type = "music"
     else: gen_type = "text"
 
-# --- THE GOD MODE API LOGIC ---
+# --- BULLETPROOF API LOGIC ---
 if final_prompt or uploaded_file or camera_photo:
     if uploaded_file or camera_photo:
         final_prompt = final_prompt if final_prompt else "इस इमेज/फाइल को एनालाइज करो।"
@@ -148,53 +147,62 @@ if final_prompt or uploaded_file or camera_photo:
             ai_reply = ""
             media_data = None
             media_type = None
+            last_error = ""
             temp = st.session_state.creativity
             
-            # 🎨 IMAGE GENERATION 
+            # 🎨 Image/Video/Music Handlers
             if gen_type == "image":
-                ai_reply = f"Babu, Image Generation API ko alag se connect karna hoga. Abhi ke liye prompt tha: `{safe_prompt}`"
-                media_data = "https://via.placeholder.com/800x400.png?text=SR+Comedy+Gang+Image+Ready"
+                ai_reply = f"Babu, Image Gen API connection pending. Prompt: `{safe_prompt}`"
+                media_data = "https://via.placeholder.com/800x400.png?text=SR+Comedy+Gang"
                 media_type = "image"
-                
-            # 🎥 VIDEO GENERATION
             elif gen_type == "video":
-                ai_reply = f"Babu, Veo 3.1 Video Engine API connect karna bacha hai. Prompt: `{safe_prompt}`"
+                ai_reply = f"Babu, Veo 3.1 Engine connection pending. Prompt: `{safe_prompt}`"
                 media_type = "video"
-
-            # 🎵 MUSIC GENERATION
             elif gen_type == "music":
-                ai_reply = f"Babu, Lyria 3 Engine API setup karna bacha hai. Prompt: `{safe_prompt}`"
+                ai_reply = f"Babu, Lyria 3 Engine connection pending. Prompt: `{safe_prompt}`"
                 media_type = "audio"
                 
-            # 🎙️ GEMINI LIVE & 📝 TEXT ENGINE (FIXED THE BUG HERE 🚨)
+            # 🎙️ GEMINI LIVE & 📝 TEXT ENGINE (AUTO-SWITCH)
             elif gen_type == "live" or st.session_state.live_mode or gen_type == "text":
                 
-                # Live mode mein system ko instruct karo ki phone call jaisa baat kare
                 if st.session_state.live_mode or gen_type == "live":
-                    sys_prompt = "Reply in short, natural conversational Hinglish as if we are on a live voice call. User says: " + safe_prompt
-                    st.session_state.voice_on = True # Force audio ON for Live Mode
+                    sys_prompt = "Reply in short, natural Hinglish like a phone call. User says: " + safe_prompt
+                    st.session_state.voice_on = True
                 else:
                     sys_prompt = safe_prompt
 
                 if g_keys:
                     try:
                         k = random.choice(g_keys)
-                        m = "gemini-3.1-pro-preview" if "PRO" in mode else "gemini-3.1-flash-preview"
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={k}"
-                        resp = requests.post(url, json={"contents": [{"parts": [{"text": sys_prompt}]}], "generationConfig": {"temperature": temp}}, timeout=10)
-                        ai_reply = resp.json()['candidates'][0]['content']['parts'][0]['text']
-                    except: pass
+                        # The Mastermind Auto-Fallback List
+                        models_to_try = ["gemini-3.1-flash-preview", "gemini-1.5-flash"]
+                        if "PRO" in mode:
+                            models_to_try = ["gemini-3.1-pro-preview", "gemini-1.5-pro"]
+                            
+                        for m in models_to_try:
+                            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={k}"
+                            resp = requests.post(url, json={"contents": [{"parts": [{"text": sys_prompt}]}], "generationConfig": {"temperature": temp}}, timeout=10)
+                            
+                            if resp.status_code == 200:
+                                ai_reply = resp.json()['candidates'][0]['content']['parts'][0]['text']
+                                break # Success! Stop trying other models
+                            else:
+                                last_error = f"HTTP {resp.status_code} - {resp.text}"
+                                continue # Try the next model in the list
+                    except Exception as e:
+                        last_error = str(e)
                 
                 # Fallback to Fast (Groq)
                 if not ai_reply and "FAST" in mode and gr_keys:
                     try:
                         k = random.choice(gr_keys)
                         resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers={"Authorization": f"Bearer {k}"}, json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": safe_prompt}], "temperature": temp}, timeout=5)
-                        ai_reply = resp.json()['choices'][0]['message']['content']
+                        if resp.status_code == 200: ai_reply = resp.json()['choices'][0]['message']['content']
                     except: pass
 
-            # Agar keys nahi daali hongi toh ye message aayega!
-            if not ai_reply: ai_reply = "Babu, Keys thak gayi hain ya apne API key nahi daali hai Streamlit Secrets me! Ek baar check kar lijiye. 🗝️✨"
+            if not ai_reply: 
+                ai_reply = f"🚨 Babu, Google API Error! Detail: {last_error}"
+                
             status.update(label="Jawab Taiyar Hai ✅", state="complete", expanded=False)
 
         st.markdown(ai_reply)
@@ -203,16 +211,15 @@ if final_prompt or uploaded_file or camera_photo:
         # Save to history
         msg_data = {"role": "assistant", "content": ai_reply}
         if media_data:
-            msg_data["media"] = media_data
-            msg_data["media_type"] = media_type
+            msg_data["media"] = media_data; msg_data["media_type"] = media_type
         st.session_state.messages.append(msg_data)
         
         # Voice Output
-        if st.session_state.voice_on and gen_type not in ["music", "video"]:
+        if st.session_state.voice_on and "🚨" not in ai_reply and gen_type not in ["music", "video"]:
             try:
                 asyncio.run(generate_voice(ai_reply))
                 st.audio("reply.mp3")
             except: pass
             
     if button_prompt: st.rerun()
-                        
+                
