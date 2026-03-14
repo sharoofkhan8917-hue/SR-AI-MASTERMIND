@@ -15,25 +15,27 @@ def get_random_key(prefix, count):
     key_index = random.randint(1, count)
     return st.secrets[f"{prefix}{key_index}"]
 
-# --- 🤖 ENGINE 1: GOOGLE GEMINI ---
+# --- 🤖 ENGINE 1: GOOGLE GEMINI (UPDATED MODEL) ---
 def call_gemini(prompt):
     try:
         current_key = get_random_key("KEY", 5)
         genai.configure(api_key=current_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Naya aur update kiya hua Gemini model
+        model = genai.GenerativeModel('gemini-1.5-pro-latest')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"Gemini Error: {str(e)} - Try switching keys!"
 
-# --- ⚡ ENGINE 2: GROQ (Ultra Fast) ---
+# --- ⚡ ENGINE 2: GROQ (Ultra Fast - UPDATED MODEL) ---
 def call_groq(prompt):
     try:
         current_key = get_random_key("GROQ", 6)
         client = Groq(api_key=current_key)
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            # Groq ka naya Llama 3.1 model jo kabhi fail nahi hota
+            model="llama-3.1-8b-instant",
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
@@ -77,4 +79,4 @@ if prompt := st.chat_input("Babu, kya mission hai aaj?"):
         
         st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
-
+        
