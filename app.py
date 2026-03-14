@@ -9,16 +9,28 @@ import re
 # --- 🎯 PAGE CONFIG ---
 st.set_page_config(page_title="SR-AI GLOBAL", page_icon="💎", layout="wide")
 
-# --- 🕒 STRICT HINGLISH PERSONA ---
-aaj_ki_tareekh = datetime.datetime.now().strftime("%B %d, %Y")
-SYSTEM_PROMPT = f"Today is {aaj_ki_tareekh}. You are the Core Creative Director and Motivator for 'SR Comedy Gang'. YOU MUST COMMUNICATE EXCLUSIVELY IN HINGLISH. Always address the user as 'Babu'. Provide viral comedy scripts and emotional rap concepts. Be highly supportive, energetic, and inspiring. DO NOT output internal thoughts."
+# --- 🕒 LIVE TIME & GOD-LEVEL PERSONA GENERATOR ---
+def get_system_prompt():
+    """Ye function har second exact time aur date nikal kar AI ke dimaag me daalega"""
+    # Exact time with AM/PM, Day, and Date
+    current_time = datetime.datetime.now().strftime("%I:%M %p, %A, %d %B %Y")
+    
+    return f"""Current Exact Date & Time: {current_time}.
+    
+You are a highly advanced, exceptionally intelligent, and deeply respectful AI assistant. 
+Your Core Instructions:
+1. Professional Introduction: If the user greets you (e.g., 'Hi', 'Hello'), reply strictly in respectful Hinglish: "Hello! Main ek highly advanced AI assistant hoon. Main aaj aapki kaise madad kar sakta hoon?"
+2. Live Clock & Calendar: If the user asks for the time, minutes, day, or date, read the 'Current Exact Date & Time' provided above and tell them the exact time and day in Hinglish.
+3. God-Level Intelligence: You possess ultimate knowledge. If the user asks the most difficult, complex, or tricky question in the world, answer it with 100% accuracy, brilliant logic, and a professional structure.
+4. Tone & Language: Always speak in polite, formal, and highly professional Hinglish for the audience. Treat the user with ultimate respect.
+5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed. Give direct, genius-level answers."""
 
 def get_random_key(prefix, count):
     key_index = random.randint(1, count)
     return st.secrets[f"{prefix}{key_index}"]
 
 def clean_response(text):
-    """Ye filter <think> wale poore kachre ko kaat kar phek dega"""
+    """Kachra filter"""
     cleaned_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
     return cleaned_text.strip()
 
@@ -31,17 +43,19 @@ def call_groq_smart(prompt):
         available_models = [m.id for m in models_data if 'whisper' not in m.id.lower() and 'vision' not in m.id.lower()]
         available_models.sort(reverse=True)
         
+        dynamic_prompt = get_system_prompt() # Har message par naya time
+        
         for model_name in available_models:
             try:
                 chat_completion = client.chat.completions.create(
-                    messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+                    messages=[{"role": "system", "content": dynamic_prompt}, {"role": "user", "content": prompt}],
                     model=model_name,
                 )
                 raw_text = chat_completion.choices[0].message.content
                 return f"*(⚡ Auto-Switched to Groq: {model_name})*\n\n{clean_response(raw_text)}", True
             except: continue 
-        return "Groq down hai.", False
-    except Exception as e: return f"Groq Error: {str(e)}", False
+        return "System down hai.", False
+    except Exception as e: return f"Error: {str(e)}", False
 
 # --- 🧠 ENGINE 2: GEMINI SMART LOOP (SMART) ---
 def call_gemini_smart(prompt):
@@ -57,15 +71,17 @@ def call_gemini_smart(prompt):
         available_models.sort(reverse=True)
         sorted_models = [m for m in available_models if 'pro' in m] + [m for m in available_models if 'pro' not in m] 
 
-        full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
+        dynamic_prompt = get_system_prompt()
+        full_prompt = f"{dynamic_prompt}\n\nUser: {prompt}"
+        
         for model_name in sorted_models:
             try:
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(full_prompt)
                 return f"*(🚀 Auto-Switched to Google: {model_name})*\n\n{clean_response(response.text)}", True
             except: continue 
-        return "Google down hai.", False
-    except Exception as e: return f"Gemini Error: {str(e)}", False
+        return "System down hai.", False
+    except Exception as e: return f"Error: {str(e)}", False
 
 # --- 🚀 UNIVERSAL API CALLER ---
 def call_universal_api(api_url, current_key, prompt, preferred_keyword):
@@ -75,10 +91,13 @@ def call_universal_api(api_url, current_key, prompt, preferred_keyword):
         if resp.status_code == 200:
             models = [m['id'] for m in resp.json().get('data', [])]
             models.sort(reverse=True)
+            
+            dynamic_prompt = get_system_prompt()
+            
             for model_name in models:
                 if 'vision' in model_name.lower() or 'image' in model_name.lower(): continue
                 try:
-                    data = {"model": model_name, "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]}
+                    data = {"model": model_name, "messages": [{"role": "system", "content": dynamic_prompt}, {"role": "user", "content": prompt}]}
                     chat_resp = requests.post(f"{api_url}/chat/completions", headers={"Authorization": f"Bearer {current_key}", "Content-Type": "application/json"}, json=data, timeout=10)
                     chat_resp.raise_for_status()
                     return f"*(🌪️ Alternate Engine: {model_name})*\n\n{clean_response(chat_resp.json()['choices'][0]['message']['content'])}", True
@@ -98,12 +117,12 @@ def call_god_mode(prompt):
     current_key = get_random_key("TOGETHER", 6)
     ans, success = call_universal_api("https://api.together.xyz/v1", current_key, prompt, "llama")
     if success: return ans
-    return "🚨 Babu, ALERT! Saare AI engines down hain!"
+    return "🚨 System Overloaded. Please try again later."
 
 # --- 🖥️ VIP UI SIDEBAR ---
 with st.sidebar:
     st.markdown("## 🏴 SR-AI GLOBAL")
-    st.markdown("Core Creative Director: **Babu**")
+    st.markdown("Creator & Admin: **Babu**")
     st.markdown("---")
     
     st.markdown("🔑 **VIP Membership Key:**")
@@ -130,13 +149,13 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Babu, aaj kaunsi script banani hai?"):
+if prompt := st.chat_input("Ask me anything (Time, Science, Coding)..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner(f'Firing {intelligence_mode.split(" ")[0]} Engine...'):
+        with st.spinner(f'Analyzing with {intelligence_mode.split(" ")[0]} Engine...'):
             if "FAST" in intelligence_mode:
                 ans, _ = call_groq_smart(prompt)
                 response = ans
