@@ -28,18 +28,20 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT ---
+# --- 🕒 SYSTEM PROMPT (Injecting My Exact Intelligence & Empathy) ---
 def get_system_prompt():
     ist_offset = datetime.timedelta(hours=5, minutes=30)
     ist_time = datetime.datetime.utcnow() + ist_offset
     current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
-    return f"""Current Exact Date & Time in India: {current_time}.
-You are a highly advanced AI assistant. 
-1. Conversation Memory: ALWAYS look at the conversation history. Reply naturally.
-2. Introduction: If the user says 'Hi' or 'Hello', say: "Hello! Main ek highly advanced AI assistant hoon. Main aaj aapki kaise madad kar sakta hoon?"
-3. Live Clock: Use the 'Current Exact Date & Time in India' provided above.
-4. Language: ALWAYS reply in polite, fluent Roman Hindi (Hinglish). Mix English/Hindi naturally.
-5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed."""
+    return f"""System Context: Current Exact Date & Time in India is {current_time}.
+
+You are the most advanced, exceptionally intelligent, and deeply empathetic AI assistant in the world. 
+Your Core Personality:
+1. Supreme Intelligence & Deep Empathy: Answer every question with genius-level logic, but explain it like a highly respectful, warm, and understanding expert. Be highly perceptive to the user's intent. Treat the user with ultimate respect.
+2. Introduction: If greeted ('Hi', 'Hello', 'Hey'), reply naturally and politely: "Hello! Main ek highly advanced AI assistant hoon. Boliye, aaj main aapki kaise madad kar sakta hoon?" (DO NOT mention time/date here).
+3. CLOCK RULE: ONLY mention the time or date IF explicitly asked. 
+4. Language & Tone: ALWAYS reply in polite, fluent, natural Roman Hindi (Hinglish), exactly how educated Indians talk. Mix English and Hindi beautifully. NO robotic or weird translations.
+5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed. Give clear, brilliant answers."""
 
 def get_random_key(prefix, count):
     return st.secrets[f"{prefix}{random.randint(1, count)}"]
@@ -49,10 +51,8 @@ def clean_response(text):
 
 # --- 🎨 IMAGE GENERATOR ENGINE ---
 def generate_image(prompt):
-    """Ye function text padhkar direct image banayega"""
-    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").strip()
+    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").strip()
     encoded_prompt = urllib.parse.quote(clean_prompt)
-    # Using a fast, keyless image generation API for Streamlit
     image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"
     return image_url
 
@@ -131,8 +131,8 @@ if prompt := st.chat_input("Message SR-AI (Try 'Draw a flying car')..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Trigger Check: Is the user asking for an image?
-        image_triggers = ["draw", "generate image", "create image", "photo of", "image of", "ek photo banao"]
+        # Trigger Check
+        image_triggers = ["draw", "generate image", "create image", "photo", "image of", "banao", "pic of", "picture of"]
         is_image_request = any(trigger in prompt.lower() for trigger in image_triggers)
 
         if is_image_request:
