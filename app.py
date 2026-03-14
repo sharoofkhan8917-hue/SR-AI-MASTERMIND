@@ -6,56 +6,28 @@ import edge_tts
 import random
 import re
 
-# ✅ 1. ULTIMATE CSS (Welcome Screen & Custom Chips)
+# ✅ 1. ULTIMATE CSS (Welcome Screen & Media Buttons)
 st.set_page_config(page_title="SR-AI PRO", page_icon="🏴", layout="wide")
 
 st.markdown("""
     <style>
-    /* Global Background (Dark) */
     .stApp { background-color: #0A0A0A; }
-    
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #111111 !important;
-        border-right: 1px solid #333;
+    [data-testid="stSidebar"] { background-color: #111111 !important; border-right: 1px solid #333; }
+    .stChatMessage.assistant { background: #1A1A1D !important; border: 1px solid #333 !important; border-radius: 20px !important; }
+    .stChatMessage.user { background: #2D2D30 !important; border-radius: 20px !important; }
+    [data-testid="stPopover"] button {
+        background-color: #1E1E1E !important; color: #E2E8F0 !important;
+        border: 1px solid #333 !important; border-radius: 50% !important;
+        width: 45px !important; height: 45px !important; font-size: 20px !important;
+        padding: 0 !important; transition: 0.3s;
     }
-
-    /* Chat Bubbles */
-    .stChatMessage.assistant {
-        background: #1A1A1D !important; border: 1px solid #333 !important;
-        border-radius: 20px !important;
-    }
-    .stChatMessage.user {
-        background: #2D2D30 !important; border-radius: 20px !important;
-    }
-
-    /* Sidebar Buttons (Gold Pro Look) */
-    [data-testid="stSidebar"] .stButton>button {
-        background: linear-gradient(45deg, #FFD700, #B8860B) !important;
-        color: black !important; border: none !important;
-        font-weight: bold !important; border-radius: 25px !important;
-        width: 100%; transition: 0.3s;
-    }
-    
-    /* MAIN AREA BUTTONS (Gemini Style Chips) */
+    [data-testid="stPopover"] button:hover { background-color: #333 !important; border-color: #FFD700 !important; }
     .stMain .stButton>button {
-        background-color: #1E1E1E !important;
-        color: #E2E8F0 !important;
-        border: 1px solid #333 !important;
-        border-radius: 30px !important;
-        padding: 12px 24px !important;
-        font-weight: normal !important;
-        font-size: 16px !important;
-        text-align: left !important;
-        display: inline-flex !important;
-        justify-content: flex-start !important;
-        transition: 0.2s;
+        background-color: #1E1E1E !important; color: #E2E8F0 !important;
+        border: 1px solid #333 !important; border-radius: 30px !important;
+        padding: 10px 20px !important; font-size: 15px !important; transition: 0.2s;
     }
-    .stMain .stButton>button:hover {
-        background-color: #2D2D30 !important; border: 1px solid #555 !important;
-    }
-    
-    /* Hide top padding for cleaner look */
+    .stMain .stButton>button:hover { background-color: #2D2D30 !important; border: 1px solid #555 !important; }
     .block-container { padding-top: 2rem !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -66,7 +38,7 @@ def privacy_guard(text):
     text = re.sub(r'\S+@\S+', '[HIDDEN_EMAIL]', text)
     return text
 
-# 🔑 3. Dynamic Key System
+# 🔑 3. Dynamic Key System (High-Level Security from Secrets)
 def get_keys(prefix): 
     try: return [st.secrets[k] for k in st.secrets if k.startswith(prefix)]
     except: return []
@@ -89,7 +61,6 @@ with st.sidebar:
         
     st.divider()
     
-    # Membership Status
     if "is_pro" not in st.session_state: st.session_state.is_pro = False
     m_key = st.text_input("🔑 VIP Membership Key:", type="password")
     if m_key == "SR_GANG_2026":
@@ -111,37 +82,46 @@ with st.sidebar:
 # --- MAIN INTERFACE (Welcome Screen & Chat) ---
 if "messages" not in st.session_state: st.session_state.messages = []
 
-# variables for chat logic
 final_prompt = None
 button_prompt = None
+uploaded_file = None
+camera_photo = None
 
 # 🌟 THE GEMINI STYLE WELCOME SCREEN
 if not st.session_state.messages:
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='color: #F8FAFC; font-size: 2.5rem; font-weight: 500;'>नमस्ते, Babu!</h1>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color: #94A3B8; font-size: 2rem; font-weight: 400; margin-top: -10px; margin-bottom: 40px;'>कहाँ से शुरुआत करें?</h2>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color: #F8FAFC; font-size: 2.5rem;'>नमस्ते, Babu!</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #94A3B8; font-size: 2rem; margin-top: -10px; margin-bottom: 40px;'>कहाँ से शुरुआत करें?</h2>", unsafe_allow_html=True)
     
-    # Custom Suggestion Chips (Tailored for SR Comedy Gang)
-    col1, col2 = st.columns([1, 2]) # Keep buttons compact on left
+    col1, col2 = st.columns([1, 2])
     with col1:
         if st.button("🎬 वायरल कॉमेडी स्क्रिप्ट"): button_prompt = "🎬 मेरे 'SR Comedy Gang' के लिए एक वायरल शॉर्ट्स की स्क्रिप्ट लिखो।"
         if st.button("🎵 नया रैप सॉन्ग बनाएँ"): button_prompt = "🎵 एक कड़क मोटिवेशनल रैप सॉन्ग लिखो जो वायरल हो जाए।"
         if st.button("💡 वीडियो आईडिया सोचें"): button_prompt = "💡 यूट्यूब के लिए 3 ट्रेंडिंग और फनी वीडियो आईडिया दो।"
-        if st.button("🚀 ट्रेंडिंग टॉपिक ढूँढें"): button_prompt = "🚀 आज इंटरनेट पर क्या ट्रेंड कर रहा है?"
-
 else:
-    # Display Chat History if messages exist
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
+# 📎 MEDIA ATTACHMENT MENU
+st.markdown("<br>", unsafe_allow_html=True)
+with st.popover("➕", help="यहाँ से फोटो या फाइल अटैच करें"):
+    st.markdown("<b style='color:#FFD700;'>अटैचमेंट्स (Attachments)</b>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("🖼️ गैलरी / 📄 फ़ाइलें", type=['png', 'jpg', 'jpeg', 'pdf', 'txt'])
+    camera_photo = st.camera_input("📸 कैमरा")
+    st.button("🎤 वॉइस इनपुट (Coming Soon)")
 
 # ✍️ Input Area
 chat_input = st.chat_input("SR-AI से पूछें...")
 final_prompt = chat_input or button_prompt
 
-# --- API LOGIC ---
-if final_prompt:
+# --- API LOGIC (UPGRADED TO GEMINI 3.1 🚀) ---
+if final_prompt or uploaded_file or camera_photo:
+    if uploaded_file or camera_photo:
+        final_prompt = final_prompt if final_prompt else "इस इमेज/फाइल के बारे में बताओ।"
+        st.success("Media Attached Successfully! 📎")
+
     st.session_state.messages.append({"role": "user", "content": final_prompt})
-    if not button_prompt: # only show user message block if it wasn't triggered by a button (to avoid double drawing before rerun)
+    if not button_prompt:
         with st.chat_message("user"): st.markdown(final_prompt)
 
     safe_prompt = privacy_guard(final_prompt)
@@ -151,21 +131,30 @@ if final_prompt:
             ai_reply = ""
             temp = st.session_state.creativity
             
-            # FAST MODE
-            if "FAST" in mode and gr_keys:
-                try:
-                    k = random.choice(gr_keys)
-                    resp = requests.post("https://api.groq.com/openai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {k}"},
-                        json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": safe_prompt}], "temperature": temp}, timeout=5)
-                    ai_reply = resp.json()['choices'][0]['message']['content']
-                except: pass
-
-            # SMART / PRO MODE
+            # FAST MODE (Groq + Gemini 3.1 Flash Lite Backup)
+            if "FAST" in mode:
+                if gr_keys: # Groq chalega pehle
+                    try:
+                        k = random.choice(gr_keys)
+                        resp = requests.post("https://api.groq.com/openai/v1/chat/completions",
+                            headers={"Authorization": f"Bearer {k}"},
+                            json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": safe_prompt}], "temperature": temp}, timeout=5)
+                        ai_reply = resp.json()['choices'][0]['message']['content']
+                    except: pass
+                
+            # SMART / PRO MODE (Ya fir agar Fast mein Groq fail ho jaye)
             if not ai_reply and g_keys:
                 try:
                     k = random.choice(g_keys)
-                    m = "gemini-1.5-pro" if "PRO" in mode else "gemini-1.5-flash"
+                    
+                    # 🚀 THE 3.1 ENGINE UPGRADE LOGIC 🚀
+                    if "PRO" in mode:
+                        m = "gemini-3.1-pro-preview" 
+                    elif "FAST" in mode:
+                        m = "gemini-3.1-flash-lite-preview"
+                    else:
+                        m = "gemini-3.1-flash-preview"
+                        
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={k}"
                     resp = requests.post(url, json={
                         "contents": [{"parts": [{"text": safe_prompt}]}],
@@ -187,6 +176,5 @@ if final_prompt:
                 st.audio("reply.mp3")
             except: pass
             
-    # Rerun to clear home screen if a button was clicked
     if button_prompt: st.rerun()
-        
+    
