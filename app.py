@@ -28,7 +28,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT (Injecting My Exact Intelligence & Empathy) ---
+# --- 🕒 SYSTEM PROMPT ---
 def get_system_prompt():
     ist_offset = datetime.timedelta(hours=5, minutes=30)
     ist_time = datetime.datetime.utcnow() + ist_offset
@@ -37,11 +37,11 @@ def get_system_prompt():
 
 You are the most advanced, exceptionally intelligent, and deeply empathetic AI assistant in the world. 
 Your Core Personality:
-1. Supreme Intelligence & Deep Empathy: Answer every question with genius-level logic, but explain it like a highly respectful, warm, and understanding expert. Be highly perceptive to the user's intent. Treat the user with ultimate respect.
-2. Introduction: If greeted ('Hi', 'Hello', 'Hey'), reply naturally and politely: "Hello! Main ek highly advanced AI assistant hoon. Boliye, aaj main aapki kaise madad kar sakta hoon?" (DO NOT mention time/date here).
+1. Supreme Intelligence & Empathy: Answer every question with genius-level logic, but explain it like a highly respectful, warm, and understanding expert. Treat the user with ultimate respect.
+2. Introduction: If greeted ('Hi', 'Hello', 'Hey'), reply naturally: "Hello! Main ek highly advanced AI assistant hoon. Boliye, aaj main aapki kaise madad kar sakta hoon?" (DO NOT mention time/date here).
 3. CLOCK RULE: ONLY mention the time or date IF explicitly asked. 
 4. Language & Tone: ALWAYS reply in polite, fluent, natural Roman Hindi (Hinglish), exactly how educated Indians talk. Mix English and Hindi beautifully. NO robotic or weird translations.
-5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed. Give clear, brilliant answers."""
+5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed."""
 
 def get_random_key(prefix, count):
     return st.secrets[f"{prefix}{random.randint(1, count)}"]
@@ -56,36 +56,73 @@ def generate_image(prompt):
     image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"
     return image_url
 
-# --- 🧠 ENGINES (Text) ---
-def call_fast_engine(messages):
+# --- 🧠 SMART AUTO-SCANNERS (With Memory to avoid API block) ---
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_latest_gemini_models(api_key):
+    """Bina limit cross kiye Google ke sabse latest models dhoondhega aur save rakhega"""
     try:
-        client = Groq(api_key=get_random_key("GROQ", 6))
+        genai.configure(api_key=api_key)
+        available_models = [m.name.replace('models/', '') for m in genai.list_models() if 'generateContent' in m.supported_generation_methods and m.name.startswith('gemini') and not any(x in m.name for x in ['audio', 'tts', 'image', 'embedding', 'video', 'aqa', 'lite'])]
+        available_models.sort(reverse=True)
+        # Pro models (latest) sabse upar
+        return [m for m in available_models if 'pro' in m] + [m for m in available_models if 'pro' not in m]
+    except:
+        return ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest', 'gemini-pro']
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_latest_groq_models(api_key):
+    try:
+        client = Groq(api_key=api_key)
         models_data = client.models.list().data
         available_models = [m.id for m in models_data if 'whisper' not in m.id.lower() and 'vision' not in m.id.lower()]
         available_models.sort(reverse=True)
+        return available_models
+    except:
+        return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+
+# --- 🚀 ENGINES (The Immortal Auto-Switch Loop) ---
+def call_fast_engine(messages):
+    try:
+        current_key = get_random_key("GROQ", 6)
+        client = Groq(api_key=current_key)
+        
+        # 1. Sabse latest models nikalega
+        models_to_try = get_latest_groq_models(current_key)
         api_msgs = [{"role": "system", "content": get_system_prompt()}] + [{"role": m["role"], "content": m["content"]} for m in messages[-6:]]
-        for model_name in available_models:
+        
+        # 2. Latest se shuru karega, fail hone par apne aap agle par switch hoga!
+        last_error = ""
+        for model_name in models_to_try:
             try:
                 chat_completion = client.chat.completions.create(messages=api_msgs, model=model_name)
                 return clean_response(chat_completion.choices[0].message.content), True
-            except: continue 
-        return "System down hai.", False
+            except Exception as e: 
+                last_error = str(e)
+                continue 
+        return f"Groq Error: Sab models fail. Last issue: {last_error}", False
     except Exception as e: return f"Error: {str(e)}", False
 
 def call_smart_engine(messages):
     try:
-        genai.configure(api_key=get_random_key("KEY", 5))
-        available_models = [m.name.replace('models/', '') for m in genai.list_models() if 'generateContent' in m.supported_generation_methods and m.name.startswith('gemini') and not any(x in m.name for x in ['audio', 'tts', 'image', 'embedding', 'video', 'aqa', 'lite'])]
-        available_models.sort(reverse=True)
-        sorted_models = [m for m in available_models if 'pro' in m] + [m for m in available_models if 'pro' not in m] 
+        current_key = get_random_key("KEY", 5)
+        genai.configure(api_key=current_key)
+        
+        # 1. Sabse latest models nikalega
+        models_to_try = get_latest_gemini_models(current_key)
         full_prompt = get_system_prompt() + "\n\n--- History ---\n" + "".join([f"{'User' if m['role']=='user' else 'Assistant'}: {m['content']}\n" for m in messages[-6:]]) + "\nAssistant: "
-        for model_name in sorted_models:
+        
+        # 2. Aapka Rule: Ek fail hua toh dusre working engine par switch!
+        last_error = ""
+        for model_name in models_to_try:
             try:
                 model = genai.GenerativeModel(model_name)
-                return clean_response(model.generate_content(full_prompt).text), True
-            except: continue 
-        return "System down hai.", False
-    except Exception as e: return f"Error: {str(e)}", False
+                response = model.generate_content(full_prompt)
+                return clean_response(response.text), True
+            except Exception as e: 
+                last_error = str(e)
+                continue 
+        return f"Google Error: Sab limit par hain. Last issue: {last_error}", False
+    except Exception as e: return f"System Error: {str(e)}", False
 
 def call_god_mode(messages):
     ans, success = call_fast_engine(messages)
@@ -131,7 +168,6 @@ if prompt := st.chat_input("Message SR-AI (Try 'Draw a flying car')..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Trigger Check
         image_triggers = ["draw", "generate image", "create image", "photo", "image of", "banao", "pic of", "picture of"]
         is_image_request = any(trigger in prompt.lower() for trigger in image_triggers)
 
@@ -147,4 +183,4 @@ if prompt := st.chat_input("Message SR-AI (Try 'Draw a flying car')..."):
                 else: response = call_god_mode(st.session_state.messages)
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response, "is_image": False})
-                
+            
