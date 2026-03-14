@@ -88,9 +88,9 @@ final_prompt = None
 button_prompt = None
 uploaded_file = None
 camera_photo = None
-gen_type = "text" # Default is text generation
+gen_type = "text"
 
-# 🌟 THE GEMINI STYLE WELCOME SCREEN (WITH ALL FEATURES)
+# 🌟 THE GEMINI STYLE WELCOME SCREEN
 if not st.session_state.messages:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("<h1 style='color: #F8FAFC; font-size: 2.5rem;'>नमस्ते, Babu!</h1>", unsafe_allow_html=True)
@@ -109,7 +109,6 @@ else:
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]): 
             st.markdown(msg["content"])
-            # Display media if it exists in history
             if "media" in msg:
                 if msg["media_type"] == "image": st.image(msg["media"])
                 elif msg["media_type"] == "audio": st.audio(msg["media"])
@@ -127,7 +126,6 @@ with st.popover("➕", help="यहाँ से फोटो या फाइ�
 chat_input = st.chat_input("SR-AI से पूछें (या /image, /video, /music लिखें)...")
 final_prompt = chat_input or button_prompt
 
-# Detect manual slash commands
 if chat_input:
     if chat_input.startswith("/image"): gen_type = "image"
     elif chat_input.startswith("/video"): gen_type = "video"
@@ -152,36 +150,38 @@ if final_prompt or uploaded_file or camera_photo:
             media_type = None
             temp = st.session_state.creativity
             
-            # 🎨 IMAGE GENERATION (Imagen 4.0 / Nano Banana 2)
+            # 🎨 IMAGE GENERATION 
             if gen_type == "image":
-                ai_reply = f"Babu, main aapke liye `{safe_prompt}` par ek dhansoo image generate kar rahi hoon! (API Connected to imagen-4.0)"
-                media_data = "https://via.placeholder.com/800x400.png?text=SR+Comedy+Gang+Image+Generated" # Placeholder for actual API bytes
+                ai_reply = f"Babu, Image Generation API ko alag se connect karna hoga. Abhi ke liye prompt tha: `{safe_prompt}`"
+                media_data = "https://via.placeholder.com/800x400.png?text=SR+Comedy+Gang+Image+Ready"
                 media_type = "image"
                 
-            # 🎥 VIDEO GENERATION (Veo 3.1)
+            # 🎥 VIDEO GENERATION
             elif gen_type == "video":
-                ai_reply = f"Babu, Veo 3.1 engine start ho gaya hai! `{safe_prompt}` ka video render ho raha hai."
+                ai_reply = f"Babu, Veo 3.1 Video Engine API connect karna bacha hai. Prompt: `{safe_prompt}`"
                 media_type = "video"
-                # media_data = ... (Video logic here)
 
-            # 🎵 MUSIC GENERATION (Lyria 3)
+            # 🎵 MUSIC GENERATION
             elif gen_type == "music":
-                ai_reply = f"Lyria 3 engine active! `{safe_prompt}` par ek viral track ban raha hai."
+                ai_reply = f"Babu, Lyria 3 Engine API setup karna bacha hai. Prompt: `{safe_prompt}`"
                 media_type = "audio"
                 
-            # 🎙️ GEMINI LIVE (Native Audio)
-            elif gen_type == "live" or st.session_state.live_mode:
-                ai_reply = "Gemini Live Mode On! Main aapki aawaz sun rahi hoon, boliye Babu..."
-                # Connects to gemini-2.5-flash-native-audio-latest
+            # 🎙️ GEMINI LIVE & 📝 TEXT ENGINE (FIXED THE BUG HERE 🚨)
+            elif gen_type == "live" or st.session_state.live_mode or gen_type == "text":
                 
-            # 📝 TEXT & VISION (Gemini 3.1 Pro/Flash)
-            else:
+                # Live mode mein system ko instruct karo ki phone call jaisa baat kare
+                if st.session_state.live_mode or gen_type == "live":
+                    sys_prompt = "Reply in short, natural conversational Hinglish as if we are on a live voice call. User says: " + safe_prompt
+                    st.session_state.voice_on = True # Force audio ON for Live Mode
+                else:
+                    sys_prompt = safe_prompt
+
                 if g_keys:
                     try:
                         k = random.choice(g_keys)
                         m = "gemini-3.1-pro-preview" if "PRO" in mode else "gemini-3.1-flash-preview"
                         url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={k}"
-                        resp = requests.post(url, json={"contents": [{"parts": [{"text": safe_prompt}]}], "generationConfig": {"temperature": temp}}, timeout=10)
+                        resp = requests.post(url, json={"contents": [{"parts": [{"text": sys_prompt}]}], "generationConfig": {"temperature": temp}}, timeout=10)
                         ai_reply = resp.json()['candidates'][0]['content']['parts'][0]['text']
                     except: pass
                 
@@ -193,7 +193,8 @@ if final_prompt or uploaded_file or camera_photo:
                         ai_reply = resp.json()['choices'][0]['message']['content']
                     except: pass
 
-            if not ai_reply: ai_reply = "Babu, Keys thak gayi hain ya dali nahi hain! Ek baar check kar lijiye. ✨"
+            # Agar keys nahi daali hongi toh ye message aayega!
+            if not ai_reply: ai_reply = "Babu, Keys thak gayi hain ya apne API key nahi daali hai Streamlit Secrets me! Ek baar check kar lijiye. 🗝️✨"
             status.update(label="Jawab Taiyar Hai ✅", state="complete", expanded=False)
 
         st.markdown(ai_reply)
@@ -214,4 +215,4 @@ if final_prompt or uploaded_file or camera_photo:
             except: pass
             
     if button_prompt: st.rerun()
-        
+                        
