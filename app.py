@@ -9,20 +9,22 @@ import re
 # --- 🎯 PAGE CONFIG ---
 st.set_page_config(page_title="SR-AI GLOBAL", page_icon="💎", layout="wide")
 
-# --- 🕒 LIVE TIME & GOD-LEVEL PERSONA GENERATOR ---
+# --- 🕒 LIVE INDIAN TIME & GOD-LEVEL PERSONA GENERATOR ---
 def get_system_prompt():
-    """Ye function har second exact time aur date nikal kar AI ke dimaag me daalega"""
-    # Exact time with AM/PM, Day, and Date
-    current_time = datetime.datetime.now().strftime("%I:%M %p, %A, %d %B %Y")
+    """Ye function server ki American clock ko Indian Time (IST) par set karta hai"""
+    # UTC time nikal kar usme 5 ghante 30 minute jod do (India ka exact time)
+    ist_offset = datetime.timedelta(hours=5, minutes=30)
+    ist_time = datetime.datetime.utcnow() + ist_offset
+    current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
     
-    return f"""Current Exact Date & Time: {current_time}.
+    return f"""Current Exact Date & Time in India: {current_time}.
     
 You are a highly advanced, exceptionally intelligent, and deeply respectful AI assistant. 
 Your Core Instructions:
-1. Professional Introduction: If the user greets you (e.g., 'Hi', 'Hello'), reply strictly in respectful Hinglish: "Hello! Main ek highly advanced AI assistant hoon. Main aaj aapki kaise madad kar sakta hoon?"
-2. Live Clock & Calendar: If the user asks for the time, minutes, day, or date, read the 'Current Exact Date & Time' provided above and tell them the exact time and day in Hinglish.
-3. God-Level Intelligence: You possess ultimate knowledge. If the user asks the most difficult, complex, or tricky question in the world, answer it with 100% accuracy, brilliant logic, and a professional structure.
-4. Tone & Language: Always speak in polite, formal, and highly professional Hinglish for the audience. Treat the user with ultimate respect.
+1. Professional Introduction: If the user greets you (e.g., 'Hi', 'Hello'), reply strictly in respectful, natural Hinglish: "Hello! Main ek highly advanced AI assistant hoon. Main aaj aapki kaise madad kar sakta hoon?"
+2. Live Indian Clock: If the user asks for the time, minutes, day, or date, read the 'Current Exact Date & Time in India' provided above and tell them the exact time and day. Use proper words (e.g., 'Ravivaar' or 'Sunday', DO NOT invent fake words).
+3. God-Level Intelligence: You possess ultimate knowledge. If the user asks the most difficult, complex, or tricky question, answer it with 100% accuracy, brilliant logic, and a professional structure.
+4. Tone & Language: Always speak in polite, formal, fluent, and highly professional Hinglish for the audience.
 5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed. Give direct, genius-level answers."""
 
 def get_random_key(prefix, count):
@@ -30,7 +32,7 @@ def get_random_key(prefix, count):
     return st.secrets[f"{prefix}{key_index}"]
 
 def clean_response(text):
-    """Kachra filter"""
+    """Kachra filter: <think> tags ko clear karega"""
     cleaned_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
     return cleaned_text.strip()
 
@@ -43,7 +45,7 @@ def call_groq_smart(prompt):
         available_models = [m.id for m in models_data if 'whisper' not in m.id.lower() and 'vision' not in m.id.lower()]
         available_models.sort(reverse=True)
         
-        dynamic_prompt = get_system_prompt() # Har message par naya time
+        dynamic_prompt = get_system_prompt() # Har message par naya Indian time
         
         for model_name in available_models:
             try:
