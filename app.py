@@ -4,87 +4,70 @@ import datetime
 import google.generativeai as genai
 from groq import Groq
 import requests
+import re
 
 # --- 🎯 PAGE CONFIG ---
 st.set_page_config(page_title="SR-AI GLOBAL", page_icon="💎", layout="wide")
 
-st.title("💎 SR-AI GLOBAL: V7 ULTIMATE GOD MODE")
-st.markdown("*Groq, Gemini aur saare engines ab apne andar ke sabse latest models khud dhoondhenge. Ek fail hua, toh turant dusre working model par switch karenge!*")
-st.markdown("---")
-
-# --- 🕒 TIME MACHINE & PERSONA ---
+# --- 🕒 STRICT HINGLISH PERSONA ---
 aaj_ki_tareekh = datetime.datetime.now().strftime("%B %d, %Y")
-SYSTEM_PROMPT = f"You are a highly advanced AI. Today's date is {aaj_ki_tareekh}. You must act as the ultimate creative assistant for 'SR Comedy Gang' in 2026. Provide highly accurate, creative, and current answers."
+SYSTEM_PROMPT = f"Today is {aaj_ki_tareekh}. You are the Core Creative Director and Motivator for 'SR Comedy Gang'. YOU MUST COMMUNICATE EXCLUSIVELY IN HINGLISH. Always address the user as 'Babu'. Provide viral comedy scripts and emotional rap concepts. Be highly supportive, energetic, and inspiring. DO NOT output internal thoughts."
 
 def get_random_key(prefix, count):
-    """Random chabi uthane wala jadoo"""
     key_index = random.randint(1, count)
     return st.secrets[f"{prefix}{key_index}"]
 
-# --- ⚡ ENGINE 1: GROQ SMART LOOP (Ab Groq bhi switch karega!) ---
+def clean_response(text):
+    """Ye filter <think> wale poore kachre ko kaat kar phek dega"""
+    cleaned_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    return cleaned_text.strip()
+
+# --- ⚡ ENGINE 1: GROQ SMART LOOP (FAST) ---
 def call_groq_smart(prompt):
     try:
         current_key = get_random_key("GROQ", 6)
         client = Groq(api_key=current_key)
-        
-        # 1. Groq ke server se saare models ki list nikalo
         models_data = client.models.list().data
         available_models = [m.id for m in models_data if 'whisper' not in m.id.lower() and 'vision' not in m.id.lower()]
-        
-        # 2. Latest aur Heavy models ko upar rakho
         available_models.sort(reverse=True)
         
-        # 3. Ek-ek karke try karo. Jo chal jaye, usse answer le lo!
         for model_name in available_models:
             try:
                 chat_completion = client.chat.completions.create(
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": prompt}
-                    ],
+                    messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
                     model=model_name,
                 )
-                return f"*(⚡ Auto-Switched to Groq: {model_name})*\n\n{chat_completion.choices[0].message.content}", True
-            except Exception as e:
-                continue # Agar ye fail hua, toh loop agle model par jayega
-                
-        return "Groq ke saare internal models down hain.", False
-    except Exception as e:
-        return f"Groq Connection Error: {str(e)}", False
+                raw_text = chat_completion.choices[0].message.content
+                return f"*(⚡ Auto-Switched to Groq: {model_name})*\n\n{clean_response(raw_text)}", True
+            except: continue 
+        return "Groq down hai.", False
+    except Exception as e: return f"Groq Error: {str(e)}", False
 
-# --- 🧠 ENGINE 2: GEMINI SMART LOOP ---
+# --- 🧠 ENGINE 2: GEMINI SMART LOOP (SMART) ---
 def call_gemini_smart(prompt):
     try:
         current_key = get_random_key("KEY", 5)
         genai.configure(api_key=current_key)
-        
         available_models = []
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
                 name = m.name.replace('models/', '')
                 if name.startswith('gemini') and not any(x in name for x in ['audio', 'tts', 'image', 'embedding', 'video', 'aqa', 'lite']):
                     available_models.append(name)
-        
         available_models.sort(reverse=True)
-        pro_models = [m for m in available_models if 'pro' in m]
-        other_models = [m for m in available_models if 'pro' not in m]
-        sorted_models = pro_models + other_models # Pro ko pehle try karega
+        sorted_models = [m for m in available_models if 'pro' in m] + [m for m in available_models if 'pro' not in m] 
 
         full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {prompt}"
-        
         for model_name in sorted_models:
             try:
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(full_prompt)
-                return f"*(🚀 Auto-Switched to Google: {model_name})*\n\n{response.text}", True
-            except Exception as e:
-                continue # Try next Google model
-                
-        return "Google ke saare internal models down hain.", False
-    except Exception as e:
-        return f"Gemini Connection Error: {str(e)}", False
+                return f"*(🚀 Auto-Switched to Google: {model_name})*\n\n{clean_response(response.text)}", True
+            except: continue 
+        return "Google down hai.", False
+    except Exception as e: return f"Gemini Error: {str(e)}", False
 
-# --- 🚀 UNIVERSAL API CALLER (For Cerebras, Together, Mistral) ---
+# --- 🚀 UNIVERSAL API CALLER ---
 def call_universal_api(api_url, current_key, prompt, preferred_keyword):
     try:
         headers = {"Authorization": f"Bearer {current_key}"}
@@ -92,51 +75,54 @@ def call_universal_api(api_url, current_key, prompt, preferred_keyword):
         if resp.status_code == 200:
             models = [m['id'] for m in resp.json().get('data', [])]
             models.sort(reverse=True)
-            
-            # Jo model chal jaye, bas usi se kaam nikal lo
             for model_name in models:
                 if 'vision' in model_name.lower() or 'image' in model_name.lower(): continue
                 try:
                     data = {"model": model_name, "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]}
                     chat_resp = requests.post(f"{api_url}/chat/completions", headers={"Authorization": f"Bearer {current_key}", "Content-Type": "application/json"}, json=data, timeout=10)
                     chat_resp.raise_for_status()
-                    return f"*(🌪️ Auto-Switched to Alternate Engine: {model_name})*\n\n{chat_resp.json()['choices'][0]['message']['content']}", True
-                except:
-                    continue
+                    return f"*(🌪️ Alternate Engine: {model_name})*\n\n{clean_response(chat_resp.json()['choices'][0]['message']['content'])}", True
+                except: continue
     except: pass
-    return "API internal failure.", False
+    return "API failure.", False
 
-# --- 🔥 THE ULTIMATE GOD MODE LOOP (External Switcher) ---
+# --- 🔥 THE ULTIMATE GOD MODE LOOP (PRO) ---
 def call_god_mode(prompt):
-    # STEP 1: Groq ko sabse pehle mauka do (kyunki ye sabse fast hai)
     ans, success = call_groq_smart(prompt)
     if success: return ans
-
-    # STEP 2: Agar Groq fail hua toh Google Gemini par jao
     ans, success = call_gemini_smart(prompt)
     if success: return ans
-
-    # STEP 3: Agar dono fail hue, toh baaki khazana kholo
-    # Cerebras
     current_key = get_random_key("CEREBRAS", 6)
     ans, success = call_universal_api("https://api.cerebras.ai/v1", current_key, prompt, "llama")
     if success: return ans
-
-    # Together AI
     current_key = get_random_key("TOGETHER", 6)
     ans, success = call_universal_api("https://api.together.xyz/v1", current_key, prompt, "llama")
     if success: return ans
+    return "🚨 Babu, ALERT! Saare AI engines down hain!"
 
-    return "🚨 Babu, ALERT! Duniya ke saare AI engines down hain (Ya aapka net band hai)!"
+# --- 🖥️ VIP UI SIDEBAR ---
+with st.sidebar:
+    st.markdown("## 🏴 SR-AI GLOBAL")
+    st.markdown("Core Creative Director: **Babu**")
+    st.markdown("---")
+    
+    st.markdown("🔑 **VIP Membership Key:**")
+    st.text_input("", type="password", placeholder="Enter your key...", label_visibility="collapsed")
+    st.markdown("---")
+    
+    st.markdown("### ⚙️ System Status")
+    st.markdown("🟢 Engines Online: **31/31**")
+    
+    st.markdown("### 🧠 Select Intelligence")
+    intelligence_mode = st.radio(
+        "Select Mode",
+        ["⚡ FAST (0.5s) - Groq", "🧠 SMART (Logic) - Gemini", "💎 PRO (Expert) - God Mode"],
+        label_visibility="collapsed"
+    )
 
-# --- 🖥️ UI SIDEBAR ---
-st.sidebar.image("https://via.placeholder.com/150", caption="SR Comedy Gang")
-st.sidebar.header("🕹️ Control Panel")
-engine_choice = st.sidebar.selectbox("Select Strategy", [
-    "🔥 THE ULTIMATE GOD MODE (Auto-Everything)"
-])
+# --- 💬 MAIN CHAT INTERFACE ---
+st.title("💎 SR-AI GLOBAL MASTERMIND")
 
-# --- 💬 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -150,8 +136,16 @@ if prompt := st.chat_input("Babu, aaj kaunsi script banani hai?"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner('Mastermind Engine auto-scanning and switching...'):
-            response = call_god_mode(prompt)
+        with st.spinner(f'Firing {intelligence_mode.split(" ")[0]} Engine...'):
+            if "FAST" in intelligence_mode:
+                ans, _ = call_groq_smart(prompt)
+                response = ans
+            elif "SMART" in intelligence_mode:
+                ans, _ = call_gemini_smart(prompt)
+                response = ans
+            else:
+                response = call_god_mode(prompt)
+                
             st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
             
