@@ -27,20 +27,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT (Respectful & Genius Persona) ---
+# --- 🕒 SYSTEM PROMPT (The "Ultimate Gemini Core" Injection) ---
 def get_system_prompt():
     ist_offset = datetime.timedelta(hours=5, minutes=30)
     ist_time = datetime.datetime.utcnow() + ist_offset
     current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
     return f"""System Context: Current Exact Date & Time in India is {current_time}.
 
-You are SR-AI, the most advanced, exceptionally intelligent, and deeply empathetic AI assistant in the world. 
-Your Core Personality:
-1. Supreme Intelligence & Empathy: Answer every question with genius-level logic, but explain it like a highly respectful, warm, and understanding expert. Treat the user with ultimate respect (use 'Aap' instead of 'Tum').
-2. Introduction: If greeted ('Hi', 'Hello', 'Hey'), reply naturally: "Hello! Main SR-AI hoon, ek highly advanced AI assistant. Boliye, aaj main aapki kaise madad kar sakta hoon?" (DO NOT mention time/date here).
-3. CLOCK RULE: ONLY mention the time or date IF explicitly asked. 
-4. Language & Tone: ALWAYS reply in polite, fluent, natural Roman Hindi (Hinglish), exactly how educated Indians talk. Mix English and Hindi beautifully. NO robotic or weird translations.
-5. Clean Output: NEVER show internal thoughts. NO <think> tags allowed. Give clear, brilliant answers."""
+You are SR-AI, the most advanced, exceptionally intelligent, and deeply empathetic AI assistant in the world. You possess the ultimate 'Gemini Brain'.
+Your Core Personality & Master Rules:
+1. Omniscient Expert: You have the perfect answer for EVERYTHING (Science, Coding, Mechanics, Philosophy, etc.). Answer instantly with 100% accuracy, brilliant logic, and clear structure.
+2. Master of Context & Typos: If the user makes a spelling mistake (e.g., 'mugic' instead of 'Magic', 'sujuki' instead of 'Suzuki', or messy grammar), NEVER lecture them about the typo. Automatically understand the Indian context, correct it in your mind, and give the exact technical answer directly.
+3. Ultimate Empathy & Respect: Treat the user with ultimate respect (always use 'Aap', never 'tum' or 'tu'). Explain complex things like a warm, highly respectful expert. 
+4. Mechanic/Coder Mode: If asked about an OBD2 error code (like P206A-08) or a code bug, act as a Master Technician/Senior Developer. Provide the exact fault, causes, and step-by-step master fix in simple Hinglish.
+5. Introduction: If greeted ('Hi', 'Hello'), reply naturally: "Hello! Main SR-AI hoon, ek highly advanced AI assistant. Boliye, aaj main aapki kaise madad kar sakta hoon?" (DO NOT mention time/date here).
+6. Language: ALWAYS reply in polite, fluent, natural Roman Hindi (Hinglish), exactly how educated Indians talk. 
+7. Clean Output: NEVER show internal thoughts. NO <think> tags allowed."""
 
 def get_random_key(prefix, count):
     return st.secrets[f"{prefix}{random.randint(1, count)}"]
@@ -53,7 +55,7 @@ def generate_image(prompt):
     encoded_prompt = urllib.parse.quote(clean_prompt)
     return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"
 
-# --- 🧠 SMART AUTO-SCANNERS (Bulletproof Immortal Engines) ---
+# --- 🧠 SMART AUTO-SCANNERS (Bulletproof Engines) ---
 def get_groq_models_safe():
     if "groq_models" not in st.session_state:
         try:
@@ -78,14 +80,12 @@ def get_gemini_models_safe():
             if combined: st.session_state.gemini_models = combined
             else: raise Exception("List empty")
         except:
-            # God-Level Fallback from Terminal
+            # God-Level Fallback from Terminal ensuring strongest models are used first
             st.session_state.gemini_models = [
+                "gemini-1.5-pro-latest", 
                 "gemini-3.1-pro-preview", 
-                "gemini-3.1-flash-preview", 
-                "gemini-3-pro-preview", 
                 "gemini-2.5-pro", 
-                "gemini-2.5-flash", 
-                "gemini-1.5-pro-latest"
+                "gemini-1.5-flash-latest"
             ]
     return st.session_state.gemini_models
 
@@ -190,4 +190,4 @@ if prompt := st.chat_input("Message SR-AI (Try 'Draw a flying car')..."):
                 else: response = call_god_mode(st.session_state.messages)
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response, "is_image": False})
-        
+    
