@@ -45,6 +45,8 @@ Your Core Rules:
 # 🔥 KEY ROTATION STATE (INITIALIZE ONCE) 🔥
 if 'gemini_key_index' not in st.session_state:
     st.session_state.gemini_key_index = 0
+if 'image_engine_index' not in st.session_state:
+    st.session_state.image_engine_index = 0
 
 # 🔥 THE SMART KEY FIX: SEQUENTIAL GEMINI KEYS & GROQ RANDOM KEYS 🔥
 def get_next_gemini_key():
@@ -62,24 +64,30 @@ def clean_response(text):
     return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
 # 🔥 DEDICATED IMAGE ENGINES & FALLBACK LOOP 🔥
-def generate_image_fallback(prompt):
-    """Bulletproof fallback chain specifically for image generation."""
+def get_next_image_engine(prompt):
+    """Bina ruke har image engine ko line se try karo jab tak photo na mile!"""
     clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").strip()
     encoded_prompt = urllib.parse.quote(clean_prompt)
     
-    # Abhi ke liye sabse fast aur bina API key wala free engine active hai.
     image_engines = [
         {"name": "Pollinations.ai (Main)", "url": f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"}
     ]
     
-    for engine in image_engines:
-        try:
-            return engine["url"], engine["name"]
-        except:
-            continue
-            
-    # Final Fallback
-    return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true", "Pollinations.ai (Final Free Fallback)"
+    num_image_engines = len(image_engines)
+    engine = image_engines[st.session_state.image_engine_index % num_image_engines]
+    st.session_state.image_engine_index = (st.session_state.image_engine_index + 1) % num_image_engines
+    
+    return engine["url"], engine["name"]
+
+def generate_image_fallback(prompt):
+    """Bulletproof fallback chain specifically for image generation."""
+    try:
+        image_url, engine_name = get_next_image_engine(prompt)
+        return image_url, engine_name
+    except:
+        clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").strip()
+        encoded_prompt = urllib.parse.quote(clean_prompt)
+        return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true", "Pollinations.ai (Final Free Fallback)"
 
 # --- 🚀 THE ENGINES ---
 def filter_history_for_api(messages):
@@ -88,7 +96,7 @@ def filter_history_for_api(messages):
     for m in messages:
         if not m.get("is_image") and not m.get("is_image_prompt"):
             filtered.append(m)
-    return filtered[-6:] # Keep last 6 text messages
+    return filtered[-6:] 
 
 def run_fast_groq(messages):
     try:
@@ -170,16 +178,18 @@ def main_image_flow(prompt):
         image_url, engine_name = generate_image_fallback(prompt)
         st.image(image_url)
         st.session_state.messages.append({"role": "assistant", "content": image_url, "is_image": True, "engine": engine_name})
+        st.session_state.image_engine_index = 0
 
 # --- 🖥️ SIDEBAR ---
 with st.sidebar:
     if st.button("➕ New chat", use_container_width=True):
         st.session_state.messages = []
         st.session_state.gemini_key_index = 0
+        st.session_state.image_engine_index = 0
         st.rerun()
     st.markdown("<br><br><br>### SR-AI Mastermind<br>---", unsafe_allow_html=True)
     with st.expander("⚙️ Settings"):
-        st.markdown("- Auto-Switch: **ON**\n- Gemini Keys: **5 Active**\n- Groq Keys: **6 Active**\n- Image Engines: **ACTIVE**")
+        st.markdown("- Auto-Switch: **ON**\n- Gemini Keys: **5 Active**\n- Groq Keys: **6 Active**\n- Hacker Bypass: **ACTIVE**")
         voice_enabled = st.checkbox("🔊 Voice Output", value=True)
 
 # --- 💬 MAIN CHAT INTERFACE ---
@@ -272,4 +282,4 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     </script>
                     """
                     components.html(js_code, width=0, height=0)
-    
+                    
