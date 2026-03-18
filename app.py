@@ -66,7 +66,7 @@ def clean_response(text):
 # 🔥 DEDICATED IMAGE ENGINES & FALLBACK LOOP 🔥
 def get_next_image_engine(prompt):
     """Bina ruke har image engine ko line se try karo jab tak photo na mile!"""
-    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").strip()
+    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").strip()
     encoded_prompt = urllib.parse.quote(clean_prompt)
     
     image_engines = [
@@ -85,7 +85,7 @@ def generate_image_fallback(prompt):
         image_url, engine_name = get_next_image_engine(prompt)
         return image_url, engine_name
     except:
-        clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").strip()
+        clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").strip()
         encoded_prompt = urllib.parse.quote(clean_prompt)
         return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true", "Pollinations.ai (Final Free Fallback)"
 
@@ -220,7 +220,8 @@ selected_mode = st.radio(
 
 if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
     
-    image_triggers = ["draw", "generate image", "create image", "photo", "image of", "banao", "pic of"]
+    # 🔥 THE ULTIMATE MASTERMIND IMAGE RADAR 🔥
+    image_triggers = ["draw", "image", "photo", "pic", "picture", "banao", "paint", "wallpaper", "visual", "tasveer", "chitra"]
     identity_triggers = ["kisne banaya", "tumhara baap", "who created", "who made", "tumhara creator", "banaya kisne", "tumhe kis ne"]
     
     is_img_prompt = any(trigger in prompt.lower() for trigger in image_triggers)
@@ -282,4 +283,4 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     </script>
                     """
                     components.html(js_code, width=0, height=0)
-                    
+                
