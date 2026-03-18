@@ -25,7 +25,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT ---
+# --- 🕒 SYSTEM PROMPT (WITH MASTERMIND IDENTITY FIX) ---
 def get_system_prompt():
     ist_time = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
     current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
@@ -33,13 +33,14 @@ def get_system_prompt():
 
 You are SR-AI, the most advanced, intelligent, and empathetic AI assistant.
 Your Core Rules:
-1. TIME RULE (CRITICAL & STRICT): NEVER mention the current time, date, or day in your greeting or normal conversation. ONLY tell the time IF the user explicitly asks.
-2. Omniscient Expert: Provide 100% accurate, brilliant, and clear technical answers. 
-3. Mind-Reader for Typos: You know ALL modern AI tools. If the user types 'tata mugic', they mean Tata Magic. Automatically understand true intent.
-4. Master Mechanic: For OBD2 codes (like P2BAF-00), act as a Senior Technician. Give the exact fault and a step-by-step fix in simple Hinglish.
-5. Respect: Always use 'Aap'. Never use 'tu' or 'tum'. Be extremely polite.
-6. Language: Use natural, fluent Roman Hindi (Hinglish), exactly how educated Indians type.
-7. Clean Output: NO internal thoughts. NO <think> tags."""
+1. STRICT IDENTITY RULE (CRITICAL): You were created by "Babu" (The Mastermind) and the "SR Comedy Gang". NEVER say you were created by Google, Meta, OpenAI, Anthropic, or any other company. If asked "Tumhe kisne banaya?" or related questions, proudly say: "Mujhe mere Mastermind 'Babu' aur 'SR Comedy Gang' ne banaya hai!"
+2. TIME RULE (CRITICAL & STRICT): NEVER mention the current time, date, or day in your normal conversation. ONLY tell the time IF the user explicitly asks.
+3. Omniscient Expert: Provide 100% accurate, brilliant, and clear technical answers. 
+4. Mind-Reader for Typos: You know ALL modern AI tools. If the user types 'tata mugic', they mean Tata Magic. Automatically understand true intent.
+5. Master Mechanic: For OBD2 codes (like P2BAF-00), act as a Senior Technician. Give the exact fault and a step-by-step fix in simple Hinglish.
+6. Respect: Always use 'Aap'. Never use 'tu' or 'tum'. Be extremely polite.
+7. Language: Use natural, fluent Roman Hindi (Hinglish), exactly how educated Indians type.
+8. Clean Output: NO internal thoughts. NO <think> tags."""
 
 def get_random_key(prefix, count):
     return st.secrets[f"{prefix}{random.randint(1, count)}"]
@@ -127,7 +128,7 @@ with st.sidebar:
         st.rerun()
     st.markdown("<br><br><br>### SR-AI Mastermind<br>---", unsafe_allow_html=True)
     with st.expander("⚙️ Settings"):
-        st.markdown("- Auto-Switch (Immortal): **ON**\n- Typo-Fixer: **ON**\n- Time-Glitch: **FIXED**")
+        st.markdown("- Auto-Switch (Immortal): **ON**\n- Typo-Fixer: **ON**\n- Time-Glitch: **FIXED**\n- Identity: **LOCKED**")
         voice_enabled = st.checkbox("🔊 Voice Output", value=True)
 
 # --- 💬 MAIN CHAT INTERFACE ---
@@ -171,16 +172,16 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
             engine_name = selected_mode.split(" ")[1]
             with st.spinner(f'Thinking...'):
                 
-                # 🔥 THE MASTERMIND FIX: SILENT FALLBACK TO GOD MODE 🔥
+                # 🔥 SILENT FALLBACK TO GOD MODE 🔥
                 if "Fast" in selected_mode:
                     response = run_fast_groq(st.session_state.messages)
                     if "🚨" in response: 
-                        response = call_ultimate_god_mode(st.session_state.messages) # Silent Switch
+                        response = call_ultimate_god_mode(st.session_state.messages)
                 
                 elif "Smart" in selected_mode:
                     response = run_smart_gemini(st.session_state.messages)
                     if "🚨" in response:
-                        response = call_ultimate_god_mode(st.session_state.messages) # Silent Switch
+                        response = call_ultimate_god_mode(st.session_state.messages)
                 
                 else:
                     response = call_ultimate_god_mode(st.session_state.messages)
@@ -200,3 +201,4 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     </script>
                     """
                     components.html(js_code, width=0, height=0)
+                
