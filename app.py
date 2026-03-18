@@ -61,12 +61,11 @@ def clean_response(text):
     if not text: return "*(Blank response from engine)*"
     return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
-# 🔥 FORCE RENDER IMAGE GENERATOR 🔥
+# 🔥 DIRECT HTML IMAGE ENGINE 🔥
 def get_next_image_engine(prompt):
     clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").replace("karke do", "").strip()
     encoded_prompt = urllib.parse.quote(clean_prompt)
     
-    # Random seed taaki browser humesha fresh photo load kare
     random_seed = random.randint(1, 100000)
     image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=768&nologo=true&seed={random_seed}"
     
@@ -168,10 +167,9 @@ def call_stable_engines_first(messages):
 def main_image_flow(prompt):
     with st.spinner('🎨 Painting your imagination without stopping...'):
         image_url, engine_name = generate_image_fallback(prompt)
-        # 🔥 FIX: Markdown use karke Streamlit ko zabardasti photo dikhane par majboor kiya 🔥
-        st.markdown(f"![Generated Image]({image_url})")
+        # 🔥 MASTERMIND HTML INJECT 🔥
+        st.markdown(f'<img src="{image_url}" width="100%" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">', unsafe_allow_html=True)
         st.session_state.messages.append({"role": "assistant", "content": image_url, "is_image": True, "engine": engine_name})
-        st.session_state.image_engine_index = 0
 
 # --- 🖥️ SIDEBAR ---
 with st.sidebar:
@@ -182,7 +180,7 @@ with st.sidebar:
         st.rerun()
     st.markdown("<br><br><br>### SR-AI Mastermind<br>---", unsafe_allow_html=True)
     with st.expander("⚙️ Settings"):
-        st.markdown("- Auto-Switch: **ON**\n- Hacker Bypass: **ACTIVE**\n- Image Renderer: **FORCE HD**")
+        st.markdown("- Auto-Switch: **ON**\n- Hacker Bypass: **ACTIVE**\n- Image Renderer: **DIRECT HTML**")
         voice_enabled = st.checkbox("🔊 Voice Output", value=True)
 
 # --- 💬 MAIN CHAT INTERFACE ---
@@ -194,8 +192,8 @@ st.markdown("<h3 style='text-align: center; color: #58a6ff;'>💎 SR-AI MASTERMI
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message.get("is_image"):
-            # 🔥 CHAT HISTORY MEIN BHI FORCE RENDER 🔥
-            st.markdown(f"![Generated Image]({message['content']})")
+            # 🔥 HISTORY MEIN BHI HTML INJECT 🔥
+            st.markdown(f'<img src="{message["content"]}" width="100%" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">', unsafe_allow_html=True)
             st.caption(f"Engine: {message.get('engine', 'Unknown')}")
         else:
             st.markdown(message["content"])
@@ -245,4 +243,4 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                 if voice_enabled:
                     safe_text = response.replace('"', '\\"').replace("'", "\\'").replace('\\', '\\\\').replace('\n', ' ').replace('*', '').replace('#', '').replace('.', '. ')
                     components.html(f'<script>var msg=new SpeechSynthesisUtterance("{safe_text}");msg.lang="hi-IN";msg.rate=1.0;window.speechSynthesis.speak(msg);</script>', width=0, height=0)
-            
+                    
