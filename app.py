@@ -10,7 +10,7 @@ import urllib.parse
 # --- 🎯 PAGE CONFIG ---
 st.set_page_config(page_title="SR-AI", page_icon="✨", layout="wide")
 
-# --- 🎨 CLEAN CHATGPT UI ---
+# --- 🎨 CLEAN UI ---
 st.markdown("""
 <style>
     .stApp { background-color: #0d1117; color: #e6edf3; }
@@ -53,7 +53,7 @@ def generate_image(prompt):
     encoded_prompt = urllib.parse.quote(clean_prompt)
     return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"
 
-# --- 🚀 THE ENGINES (Restored Individual Functions) ---
+# --- 🚀 THE ENGINES ---
 def run_fast_groq(messages):
     try:
         client = Groq(api_key=get_random_key("GROQ", 6))
@@ -64,8 +64,8 @@ def run_fast_groq(messages):
                 chat_completion = client.chat.completions.create(messages=api_msgs, model=model)
                 return clean_response(chat_completion.choices[0].message.content)
             except: continue
-        return "🚨 Fast Engine (Groq) down."
-    except Exception as e: return f"Error: {e}"
+        return "🚨 ERROR"
+    except Exception: return "🚨 ERROR"
 
 def run_smart_gemini(messages):
     try:
@@ -78,8 +78,8 @@ def run_smart_gemini(messages):
                 response = model.generate_content(prompt)
                 return clean_response(response.text)
             except: continue
-        return "🚨 Smart Engine (Gemini API limit reached)."
-    except Exception as e: return f"Error: {e}"
+        return "🚨 ERROR"
+    except Exception: return "🚨 ERROR"
 
 def call_ultimate_god_mode(messages):
     """Aapki list ke sabse powerful Text/Chat engines ka Master Loop"""
@@ -127,7 +127,7 @@ with st.sidebar:
         st.rerun()
     st.markdown("<br><br><br>### SR-AI Mastermind<br>---", unsafe_allow_html=True)
     with st.expander("⚙️ Settings"):
-        st.markdown("- Auto-Switch: **ON**\n- Typo-Fixer: **ON**\n- Time-Glitch: **FIXED**")
+        st.markdown("- Auto-Switch (Immortal): **ON**\n- Typo-Fixer: **ON**\n- Time-Glitch: **FIXED**")
         voice_enabled = st.checkbox("🔊 Voice Output", value=True)
 
 # --- 💬 MAIN CHAT INTERFACE ---
@@ -146,7 +146,6 @@ for message in st.session_state.messages:
 if len(st.session_state.messages) == 0:
     st.markdown("<h2 style='text-align: center; color: #57606a; margin-top: 5%;'>Aapki kya madad karoon?</h2>", unsafe_allow_html=True)
 
-# 🔥 MISTAKE FIXED: ALL 3 TOGGLES ARE BACK! 🔥
 st.markdown("<br>", unsafe_allow_html=True)
 selected_mode = st.radio(
     "Engine Selector",
@@ -170,11 +169,19 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                 st.session_state.messages.append({"role": "assistant", "content": image_url, "is_image": True})
         else:
             engine_name = selected_mode.split(" ")[1]
-            with st.spinner(f'Thinking using {engine_name}...'):
+            with st.spinner(f'Thinking...'):
+                
+                # 🔥 THE MASTERMIND FIX: SILENT FALLBACK TO GOD MODE 🔥
                 if "Fast" in selected_mode:
                     response = run_fast_groq(st.session_state.messages)
+                    if "🚨" in response: 
+                        response = call_ultimate_god_mode(st.session_state.messages) # Silent Switch
+                
                 elif "Smart" in selected_mode:
                     response = run_smart_gemini(st.session_state.messages)
+                    if "🚨" in response:
+                        response = call_ultimate_god_mode(st.session_state.messages) # Silent Switch
+                
                 else:
                     response = call_ultimate_god_mode(st.session_state.messages)
                     
@@ -193,4 +200,3 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     </script>
                     """
                     components.html(js_code, width=0, height=0)
-                    
