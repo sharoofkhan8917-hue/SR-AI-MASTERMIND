@@ -25,7 +25,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT (PERFECTED IDENTITY) ---
+# --- 🕒 SYSTEM PROMPT ---
 def get_system_prompt():
     ist_time = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
     current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
@@ -33,22 +33,20 @@ def get_system_prompt():
 
 You are SR-AI Mastermind, the most advanced, intelligent, and empathetic AI assistant.
 Your Core Rules:
-1. STRICT IDENTITY RULE (CRITICAL): You were created by "Babu" (The Mastermind). NEVER say you were created by Google, Meta, OpenAI, Anthropic, or any other company. If asked "Tumhe kisne banaya?" or related questions, proudly say: "Mujhe mere Mastermind 'Babu' ne banaya hai, aur main 'SR-AI Mastermind' project ka sabse khatarnak AI assistant hoon!"
-2. TIME RULE (CRITICAL & STRICT): NEVER mention the current time, date, or day in your normal conversation. ONLY tell the time IF the user explicitly asks.
-3. Omniscient Expert: Provide 100% accurate, brilliant, and clear technical answers. 
-4. Mind-Reader for Typos: Automatically understand true intent (e.g., 'tata mugic' = Tata Magic).
+1. STRICT IDENTITY RULE (CRITICAL): You were created by "Babu" (The Mastermind). NEVER say you were created by Google, Meta, OpenAI, Anthropic, or any other company. If asked "Tumhe kisne banaya?" proudly say: "Mujhe mere Mastermind 'Babu' ne banaya hai, aur main 'SR-AI Mastermind' project ka sabse khatarnak AI assistant hoon!"
+2. TIME RULE: NEVER mention the current time, date, or day in normal conversation unless explicitly asked.
+3. Omniscient Expert: Provide 100% accurate, brilliant, and clear answers. 
+4. Mind-Reader: Automatically understand true intent.
 5. Master Mechanic: For OBD2 codes, act as a Senior Technician in simple Hinglish.
 6. Respect: Always use 'Aap'. Never use 'tu' or 'tum'. Be extremely polite.
-7. Language: Use natural, fluent Roman Hindi (Hinglish), exactly how educated Indians type.
-8. Clean Output: NO internal thoughts. NO <think> tags."""
+7. Language: Use natural, fluent Roman Hindi (Hinglish).
+8. NO internal thoughts. NO <think> tags."""
 
-# 🔥 KEY ROTATION STATE (INITIALIZE ONCE) 🔥
 if 'gemini_key_index' not in st.session_state:
     st.session_state.gemini_key_index = 0
 if 'image_engine_index' not in st.session_state:
     st.session_state.image_engine_index = 0
 
-# 🔥 THE SMART KEY FIX: SEQUENTIAL GEMINI KEYS & GROQ RANDOM KEYS 🔥
 def get_next_gemini_key():
     num_gemini_keys = 5
     key = st.secrets[f"KEY{st.session_state.gemini_key_index + 1}"]
@@ -63,15 +61,16 @@ def clean_response(text):
     if not text: return "*(Blank response from engine)*"
     return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
-# 🔥 DEDICATED IMAGE ENGINES & FALLBACK LOOP 🔥
+# 🔥 FORCE RENDER IMAGE GENERATOR 🔥
 def get_next_image_engine(prompt):
-    """Bina ruke har image engine ko line se try karo jab tak photo na mile!"""
-    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").strip()
+    clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").replace("karke do", "").strip()
     encoded_prompt = urllib.parse.quote(clean_prompt)
     
-    image_engines = [
-        {"name": "Pollinations.ai (Main)", "url": f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true"}
-    ]
+    # Random seed taaki browser humesha fresh photo load kare
+    random_seed = random.randint(1, 100000)
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=768&nologo=true&seed={random_seed}"
+    
+    image_engines = [{"name": "Pollinations.ai (Main)", "url": image_url}]
     
     num_image_engines = len(image_engines)
     engine = image_engines[st.session_state.image_engine_index % num_image_engines]
@@ -80,18 +79,15 @@ def get_next_image_engine(prompt):
     return engine["url"], engine["name"]
 
 def generate_image_fallback(prompt):
-    """Bulletproof fallback chain specifically for image generation."""
     try:
         image_url, engine_name = get_next_image_engine(prompt)
         return image_url, engine_name
     except:
-        clean_prompt = prompt.lower().replace("generate an image of", "").replace("draw a", "").replace("create an image of", "").replace("draw", "").replace("photo of", "").replace("ek photo banao", "").replace("image generate", "").strip()
+        clean_prompt = prompt.lower().replace("draw", "").replace("image generate", "").strip()
         encoded_prompt = urllib.parse.quote(clean_prompt)
-        return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=800&height=600&nologo=true", "Pollinations.ai (Final Free Fallback)"
+        return f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=768&nologo=true&seed={random.randint(1,1000)}", "Pollinations.ai (Final Free Fallback)"
 
-# --- 🚀 THE ENGINES ---
 def filter_history_for_api(messages):
-    """Filters out image prompts from history so AI doesn't get confused in future text chats."""
     filtered = []
     for m in messages:
         if not m.get("is_image") and not m.get("is_image_prompt"):
@@ -128,7 +124,6 @@ def run_smart_gemini(messages):
     except Exception: return "🚨 ERROR"
 
 def call_stable_engines_first(messages):
-    """🔥 PRIORITIZED 45-ENGINE FALLBACK 🔥"""
     stable_sequence = [
         {"type": "gemini", "model": "gemini-1.5-pro-latest"},
         {"type": "gemini", "model": "gemma-3-27b-it"},
@@ -152,7 +147,6 @@ def call_stable_engines_first(messages):
     gemini_prompt = get_system_prompt() + "\n\n--- History ---\n" + "".join([f"{'User' if m['role']=='user' else 'Assistant'}: {m['content']}\n" for m in filtered_msgs]) + "\nAssistant: "
     groq_msgs = [{"role": "system", "content": get_system_prompt()}] + [{"role": m["role"], "content": m["content"]} for m in filtered_msgs]
     last_error = ""
-    
     gemini_key_for_this_loop = get_next_gemini_key()
     
     for engine in stable_sequence:
@@ -169,14 +163,13 @@ def call_stable_engines_first(messages):
         except Exception as e:
             last_error = str(e)
             continue
-            
     return f"🚨 Babu, Alert! Sabhi engines try kiye, API limits full hain. Last Error: {last_error}"
 
 def main_image_flow(prompt):
-    """Handles the entire direct image generation logic and display."""
     with st.spinner('🎨 Painting your imagination without stopping...'):
         image_url, engine_name = generate_image_fallback(prompt)
-        st.image(image_url)
+        # 🔥 FIX: Markdown use karke Streamlit ko zabardasti photo dikhane par majboor kiya 🔥
+        st.markdown(f"![Generated Image]({image_url})")
         st.session_state.messages.append({"role": "assistant", "content": image_url, "is_image": True, "engine": engine_name})
         st.session_state.image_engine_index = 0
 
@@ -189,7 +182,7 @@ with st.sidebar:
         st.rerun()
     st.markdown("<br><br><br>### SR-AI Mastermind<br>---", unsafe_allow_html=True)
     with st.expander("⚙️ Settings"):
-        st.markdown("- Auto-Switch: **ON**\n- Gemini Keys: **5 Active**\n- Groq Keys: **6 Active**\n- Hacker Bypass: **ACTIVE**")
+        st.markdown("- Auto-Switch: **ON**\n- Hacker Bypass: **ACTIVE**\n- Image Renderer: **FORCE HD**")
         voice_enabled = st.checkbox("🔊 Voice Output", value=True)
 
 # --- 💬 MAIN CHAT INTERFACE ---
@@ -201,7 +194,8 @@ st.markdown("<h3 style='text-align: center; color: #58a6ff;'>💎 SR-AI MASTERMI
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message.get("is_image"):
-            st.image(message["content"])
+            # 🔥 CHAT HISTORY MEIN BHI FORCE RENDER 🔥
+            st.markdown(f"![Generated Image]({message['content']})")
             st.caption(f"Engine: {message.get('engine', 'Unknown')}")
         else:
             st.markdown(message["content"])
@@ -210,18 +204,11 @@ if len(st.session_state.messages) == 0:
     st.markdown("<h2 style='text-align: center; color: #57606a; margin-top: 5%;'>Aapki kya madad karoon?</h2>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-selected_mode = st.radio(
-    "Engine Selector",
-    ["⚡ SR-Fast (Groq)", "🧠 SR-Smart (Gemini)", "💎 SR-God Mode (Auto-Switch Loop)"],
-    horizontal=True,
-    label_visibility="collapsed",
-    index=2
-)
+selected_mode = st.radio("Engine Selector", ["⚡ SR-Fast (Groq)", "🧠 SR-Smart (Gemini)", "💎 SR-God Mode (Auto-Switch Loop)"], horizontal=True, label_visibility="collapsed", index=2)
 
 if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
     
-    # 🔥 THE ULTIMATE MASTERMIND IMAGE RADAR 🔥
-    image_triggers = ["draw", "image", "photo", "pic", "picture", "banao", "paint", "wallpaper", "visual", "tasveer", "chitra"]
+    image_triggers = ["draw", "image", "photo", "pic", "picture", "banao", "paint", "wallpaper", "visual", "tasveer", "chitra", "generate"]
     identity_triggers = ["kisne banaya", "tumhara baap", "who created", "who made", "tumhara creator", "banaya kisne", "tumhe kis ne"]
     
     is_img_prompt = any(trigger in prompt.lower() for trigger in image_triggers)
@@ -231,32 +218,17 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        
-        # 🔥 THE MASTERMIND IMAGE INTERCEPTOR 🔥
         if is_img_prompt:
             main_image_flow(prompt)
-        
-        # 🔥 THE MASTERMIND IDENTITY INTERCEPTOR 🔥
         elif any(trigger in prompt.lower() for trigger in identity_triggers):
             with st.spinner('Verifying Mastermind Identity...'):
                 response = "Seena thok ke kehta hoon: Mujhe mere Mastermind 'Babu' ne banaya hai, aur main 'SR-AI Mastermind' project ka sabse khatarnak AI assistant hoon! 😎🔥"
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response, "is_image": False})
-                
                 if voice_enabled:
                     safe_text = response.replace('"', '\\"').replace("'", "\\'").replace('\\', '\\\\').replace('\n', ' ').replace('*', '').replace('#', '').replace('.', '. ')
-                    js_code = f"""
-                    <script>
-                        var msg = new SpeechSynthesisUtterance("{safe_text}");
-                        msg.lang = 'hi-IN';
-                        msg.rate = 1.0;
-                        window.speechSynthesis.speak(msg);
-                    </script>
-                    """
-                    components.html(js_code, width=0, height=0)
-                    
+                    components.html(f'<script>var msg=new SpeechSynthesisUtterance("{safe_text}");msg.lang="hi-IN";msg.rate=1.0;window.speechSynthesis.speak(msg);</script>', width=0, height=0)
         else:
-            # 🔥 THE MASTERMIND TEXT FLOW 🔥
             engine_name = selected_mode.split(" ")[1]
             with st.spinner(f'Thinking...'):
                 if "Fast" in selected_mode:
@@ -270,17 +242,7 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response, "is_image": False})
-
-                # --- 🔊 TEXT TO SPEECH ---
                 if voice_enabled:
                     safe_text = response.replace('"', '\\"').replace("'", "\\'").replace('\\', '\\\\').replace('\n', ' ').replace('*', '').replace('#', '').replace('.', '. ')
-                    js_code = f"""
-                    <script>
-                        var msg = new SpeechSynthesisUtterance("{safe_text}");
-                        msg.lang = 'hi-IN';
-                        msg.rate = 1.0;
-                        window.speechSynthesis.speak(msg);
-                    </script>
-                    """
-                    components.html(js_code, width=0, height=0)
-                
+                    components.html(f'<script>var msg=new SpeechSynthesisUtterance("{safe_text}");msg.lang="hi-IN";msg.rate=1.0;window.speechSynthesis.speak(msg);</script>', width=0, height=0)
+            
