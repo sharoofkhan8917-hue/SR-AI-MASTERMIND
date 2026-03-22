@@ -202,7 +202,8 @@ if len(st.session_state.messages) == 0:
     st.markdown("<h2 style='text-align: center; color: #57606a; margin-top: 5%;'>Aapki kya madad karoon?</h2>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-selected_mode = st.radio("Engine Selector", ["⚡ SR-Fast (Groq)", "🧠 SR-Smart (Gemini)", "💎 SR-God Mode (Auto-Switch Loop)"], horizontal=True, label_visibility="collapsed", index=2)
+# Yahan se Groq aur Gemini ka naam hata diya gaya hai
+selected_mode = st.radio("Engine Selector", ["⚡ SR-Fast", "🧠 SR-Smart", "💎 SR-God Mode (Auto-Switch Loop)"], horizontal=True, label_visibility="collapsed", index=2)
 
 if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
     
@@ -227,7 +228,6 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                     safe_text = response.replace('"', '\\"').replace("'", "\\'").replace('\\', '\\\\').replace('\n', ' ').replace('*', '').replace('#', '').replace('.', '. ')
                     components.html(f'<script>var msg=new SpeechSynthesisUtterance("{safe_text}");msg.lang="hi-IN";msg.rate=1.0;window.speechSynthesis.speak(msg);</script>', width=0, height=0)
         else:
-            engine_name = selected_mode.split(" ")[1]
             with st.spinner(f'Thinking...'):
                 if "Fast" in selected_mode:
                     response = run_fast_groq(st.session_state.messages)
@@ -243,4 +243,4 @@ if prompt := st.chat_input("Message SR-AI (Use phone mic for Voice)..."):
                 if voice_enabled:
                     safe_text = response.replace('"', '\\"').replace("'", "\\'").replace('\\', '\\\\').replace('\n', ' ').replace('*', '').replace('#', '').replace('.', '. ')
                     components.html(f'<script>var msg=new SpeechSynthesisUtterance("{safe_text}");msg.lang="hi-IN";msg.rate=1.0;window.speechSynthesis.speak(msg);</script>', width=0, height=0)
-                    
+    
