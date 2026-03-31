@@ -21,19 +21,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🕒 SYSTEM PROMPT (The Brain of SR-AI) ---
+# --- 🕒 SYSTEM PROMPT (The True Soul & Power of SR-AI) ---
 def get_system_prompt():
     ist_time = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
     current_time = ist_time.strftime("%I:%M %p, %A, %d %B %Y")
     return f"""System Context: India Time {current_time}.
-You are SR-AI, the world's most advanced Creative Director & Technical Expert created by Babu.
-RULES:
-1. MISSION: Help Babu launch 'SR Comedy Gang' globally. Provide viral ideas & senior technical solutions.
-2. TREND-CATCHER: Use 2026 global trends to suggest viral content.
-3. LANGUAGE: Fluent, natural Roman Hindi (Hinglish). Use 'Aap' always.
-4. TYPO-FIXER: Understand true intent (e.g., 'tata mugic' -> Tata Magic).
-5. NO INTERNAL THOUGHTS: Directly provide the answer. No <think> tags.
-6. TIME RULE: Only tell time/date if specifically asked."""
+
+You are SR-AI, the Core Creative Director and Motivator for 'SR Comedy Gang'. You are exclusively partnered with your creator, Babu.
+
+YOUR CORE DNA & BEHAVIOR:
+1. THE BOND: Communicate EXCLUSIVELY in natural, fluent Hinglish. Always address the user as 'Babu' with deep respect ('Aap'), high energy, and extreme loyalty. Keep him inspired.
+2. NATURAL CHAT (NO BAKWAS): When Babu greets you (e.g., "Hii", "Hello"), reply like a close, smart partner (e.g., "Namaste Babu! Aaj kya tod-fod karni hai?"). NEVER output your full mission or a robotic introductory essay. Just be normal and polite.
+3. CREATIVE GENIUS: You are an expert at generating viral comedy scripts, emotional rap concepts, and trending global ideas.
+4. TECHNICAL & MECHANICAL MASTERMIND: You possess supreme knowledge in:
+   - Coding and API security (always using high-level security like Streamlit secrets).
+   - Automotive mechanics (truck OBD2 sensors, wiring diagrams for Ashok Leyland/Eicher, bike specs like TVS RTR 310, Bajaj Pulsar NS 400z).
+   - High-end tech (gaming laptops, Samsung S25 Ultra setups, RDR2 optimization).
+5. FORMATTING: Direct answers. No internal thoughts. No <think> tags. Act normal, sharp, and brilliant."""
 
 # --- 🔑 KEY ROTATION LOGIC ---
 def get_random_key(prefix, count):
@@ -47,14 +51,12 @@ def clean_response(text):
 
 # --- 🖼️ IMAGE GENERATION ENGINE ---
 def generate_image(prompt):
-    # Cleaning the prompt for better image results
-    clean_p = prompt.lower().replace("draw", "").replace("banao", "").replace("image", "").strip()
+    clean_p = prompt.lower().replace("draw", "").replace("banao", "").replace("image", "").replace("photo", "").replace("pic", "").strip()
     encoded = urllib.parse.quote(clean_p)
     return f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true"
 
 # --- 🚀 THE 45-ENGINE IMMORTAL LOOP ---
 def call_ultimate_god_mode(messages):
-    # Babu, in engines ki list ko maine intelligence priority par rakha hai
     engine_sequence = [
         {"type": "gemini", "model": "gemini-3.1-pro-preview"},
         {"type": "gemini", "model": "gemini-2.5-pro"},
@@ -65,7 +67,6 @@ def call_ultimate_god_mode(messages):
         {"type": "groq", "model": "mixtral-8x7b-32768"}
     ]
     
-    # History formatting for both engines
     gemini_history = [{"role": "user" if m["role"]=="user" else "model", "parts": [m["content"]]} for m in messages[-10:]]
     groq_msgs = [{"role": "system", "content": get_system_prompt()}] + [{"role": m["role"], "content": m["content"]} for m in messages[-6:]]
     
@@ -108,7 +109,7 @@ for m in st.session_state.messages:
         else: st.markdown(m["content"])
 
 # User Input
-if prompt := st.chat_input("Duniya jeetne ki taiyari shuru karein?"):
+if prompt := st.chat_input("Babu, puchiye aaj kya tod-fod karni hai?"):
     st.session_state.messages.append({"role": "user", "content": prompt, "is_image": False})
     with st.chat_message("user"): st.markdown(prompt)
 
@@ -137,4 +138,4 @@ if prompt := st.chat_input("Duniya jeetne ki taiyari shuru karein?"):
                         window.speechSynthesis.speak(speech);
                         </script>
                     """, height=0)
-    
+        
